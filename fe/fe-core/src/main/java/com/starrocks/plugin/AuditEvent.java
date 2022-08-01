@@ -35,6 +35,7 @@
 package com.starrocks.plugin;
 
 import com.google.common.base.Joiner;
+import org.apache.commons.lang.StringUtils;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -90,6 +91,10 @@ public class AuditEvent {
     public String state = "";
     @AuditField(value = "ErrorCode")
     public String errorCode = "";
+
+    @AuditField(value = "ErrorMessage")
+    public String errorMessage = "";
+
     @AuditField(value = "Time")
     public long queryTime = -1;
     @AuditField(value = "ScanBytes")
@@ -102,6 +107,8 @@ public class AuditEvent {
     public long cpuCostNs = -1;
     @AuditField(value = "MemCostBytes", ignore_zero = true)
     public long memCostBytes = -1;
+    @AuditField(value = "ScanInfo")
+    public String scanInfo = "";
     @AuditField(value = "StmtId")
     public long stmtId = -1;
     @AuditField(value = "QueryId")
@@ -141,6 +148,7 @@ public class AuditEvent {
     public static class AuditEventBuilder {
 
         private AuditEvent auditEvent = new AuditEvent();
+
 
         public AuditEventBuilder() {
         }
@@ -313,6 +321,16 @@ public class AuditEvent {
 
         public AuditEventBuilder setIsForwardToLeader(boolean isForwardToLeader) {
             auditEvent.isForwardToLeader = isForwardToLeader;
+            return this;
+        }
+
+        public AuditEventBuilder setScanInfo(String scanInfo) {
+            auditEvent.scanInfo = scanInfo;
+            return this;
+        }
+
+        public AuditEventBuilder setErrorMessage(String errorMessage) {
+            auditEvent.errorMessage = StringUtils.replace(errorMessage, "|", " ");
             return this;
         }
 

@@ -92,6 +92,7 @@ public class QueryState {
         stateType = MysqlStateType.OK;
         errorMessage = "";
         errorCode = null;
+        errorMessage = "";
         infoMessage = null;
         errType = ErrType.UNKNOWN;
         isQuery = false;

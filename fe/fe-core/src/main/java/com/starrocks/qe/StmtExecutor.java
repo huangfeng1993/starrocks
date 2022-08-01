@@ -105,6 +105,7 @@ import com.starrocks.persist.gson.GsonUtils;
 import com.starrocks.planner.HiveTableSink;
 import com.starrocks.planner.OlapScanNode;
 import com.starrocks.planner.PlanFragment;
+import com.starrocks.planner.PlanNode;
 import com.starrocks.planner.ScanNode;
 import com.starrocks.privilege.AccessDeniedException;
 import com.starrocks.privilege.ObjectType;
@@ -617,6 +618,8 @@ public class StmtExecutor {
                         Preconditions.checkState(execPlanBuildByNewPlanner, "must use new planner");
 
                         handleQueryStmt(retryContext.getExecPlan());
+
+                        collectScanInfo(retryContext.getExecPlan());
                         break;
                     } catch (Exception e) {
                         if (i == retryTime - 1) {
@@ -819,6 +822,33 @@ public class StmtExecutor {
             context.setSessionVariable(clonedSessionVariable);
         }
         context.userVariables.putAll(userVariablesFromHint);
+    }
+    private void collectScanInfo(ExecPlan execPlan) {
+        if (execPlan == null || execPlan.getScanNodes() == null) {
+            return;
+        }
+        StringBuilder scanInfoBuilder = new StringBuilder();
+
+        for (PlanNode node : execPlan.getScanNodes()) {
+
+            if (node instanceof OlapScanNode) {
+                OlapScanNode scanNode = (OlapScanNode) node;
+
+                String table = null;
+                if (scanNode.getOlapTable() != null) {
+                    table = scanNode.getOlapTable().getName();
+                }
+                scanInfoBuilder.append(table + ";");
+                scanInfoBuilder.append(StringUtils.join(scanNode.getSelectedPartitionIds(), ",") + ";");
+                scanInfoBuilder.append(scanNode.getScanTabletIds().size() + ";");
+                scanInfoBuilder.append(scanNode.getTotalTabletsNum());
+                scanInfoBuilder.append("~");
+            }
+        }
+        if (scanInfoBuilder.length() > 0) {
+            scanInfoBuilder.deleteCharAt(scanInfoBuilder.length() - 1);
+        }
+        context.getAuditEventBuilder().setScanInfo(scanInfoBuilder.toString());
     }
 
     private void handleCreateTableAsSelectStmt(long beginTimeInNanoSecond) throws Exception {

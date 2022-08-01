@@ -1053,6 +1053,10 @@ public class OlapScanNode extends ScanNode {
         this.usePkIndex = usePkIndex;
     }
 
+    public long getTotalTabletsNum() {
+        return this.totalTabletsNum;
+    }
+
     @Override
     public boolean canDoReplicatedJoin() {
         // TODO(wyb): necessary to support?
