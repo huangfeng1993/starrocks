@@ -41,6 +41,10 @@ import com.starrocks.common.Pair;
 import com.starrocks.common.ThreadPoolManager;
 import com.starrocks.common.util.LogUtil;
 import com.starrocks.http.HttpConnectContext;
+import com.starrocks.metric.GaugeMetric;
+import com.starrocks.metric.Metric;
+import com.starrocks.metric.MetricLabel;
+import com.starrocks.metric.MetricRepo;
 import com.starrocks.mysql.MysqlProto;
 import com.starrocks.mysql.NegotiateState;
 import com.starrocks.mysql.nio.NConnectContext;
@@ -67,8 +71,12 @@ public class ConnectScheduler {
     private final AtomicInteger nextConnectionId;
 
     private final Map<Long, ConnectContext> connectionMap = Maps.newConcurrentMap();
+
     private final Map<String, AtomicInteger> connCountByUser = Maps.newConcurrentMap();
     private final ReentrantLock connStatsLock = new ReentrantLock();
+
+    private final Map<String, GaugeMetric<Integer>> userConnMetricsCounter = Maps.newConcurrentMap();
+
     private final ExecutorService executor = ThreadPoolManager
             .newDaemonCacheThreadPool(Config.max_connection_scheduler_threads_num, "connect-scheduler-pool", true);
 
@@ -161,6 +169,7 @@ public class ConnectScheduler {
             numberConnection.incrementAndGet();
             currentConnAtomic.incrementAndGet();
             connectionMap.put((long) ctx.getConnectionId(), ctx);
+            updateConnectUsersMetrics(ctx);
             return new Pair<>(true, null);
         } finally {
             connStatsLock.unlock();
@@ -184,6 +193,33 @@ public class ConnectScheduler {
             }
         } finally {
             connStatsLock.unlock();
+        }
+        /* if this user connect num is less than 0, then remove?
+         * we should also remove MetricRepo.remove(metrics), other wise, it will become multi
+         * same metrics. but StarRocksMetricRegistry.remove() is removed by name, so we cannot remove.
+         * Code:
+         * if (userConnMetricsCounter.containsKey(ctx.getQualifiedUser())) {
+         *     if (userConnMetricsCounter.get(ctx.getQualifiedUser()).getValue() <= 1) {
+         *         userConnMetricsCounter.remove(ctx.getQualifiedUser());
+         *     }
+         * }
+         */
+    }
+
+    // update metrics about connection by users
+    public void updateConnectUsersMetrics(ConnectContext ctx) {
+        String userName = ctx.getQualifiedUser();
+        if (userConnMetricsCounter.get(userName) == null) {
+            GaugeMetric<Integer> conections = new GaugeMetric<Integer>(
+                    "connection_total_user", Metric.MetricUnit.CONNECTIONS, "total connections") {
+                @Override
+                public Integer getValue() {
+                    return connCountByUser.get(userName).get();
+                }
+            };
+            conections.addLabel(new MetricLabel("user", userName));
+            MetricRepo.addMetric(conections);
+            userConnMetricsCounter.put(userName, conections);
         }
     }
 
