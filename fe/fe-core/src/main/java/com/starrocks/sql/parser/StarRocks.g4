@@ -2056,6 +2056,7 @@ relationPrimary
     | FILES propertyList
         (AS? alias=identifier columnAliases?)?                                          #fileTableFunction
     | '(' relations ')'                                                                 #parenthesizedRelation
+    | '(' relations ')' (AS? alias=identifier columnAliases?)?                          #parenthesizedRelation
     ;
 
 joinRelation

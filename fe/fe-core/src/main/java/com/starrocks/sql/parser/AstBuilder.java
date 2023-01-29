@@ -4451,8 +4451,11 @@ public class AstBuilder extends StarRocksBaseVisitor<ParseNode> {
 
     @Override
     public ParseNode visitParenthesizedRelation(StarRocksParser.ParenthesizedRelationContext context) {
+        Identifier identifier = (Identifier) visit(context.identifier());
         if (context.relations().relation().size() == 1) {
-            return visit(context.relations().relation().get(0));
+            Relation relation = (Relation) visit(context.relations().relation().get(0));
+            relation.setAlias(new TableName(null, identifier.getValue()));
+            return relation;
         } else {
             List<Relation> relations = visit(context.relations().relation(), Relation.class);
             Iterator<Relation> iterator = relations.iterator();
@@ -4460,6 +4463,7 @@ public class AstBuilder extends StarRocksBaseVisitor<ParseNode> {
             while (iterator.hasNext()) {
                 relation = new JoinRelation(null, relation, iterator.next(), null, false);
             }
+            relation.setAlias(new TableName(null, identifier.getValue()));
             return relation;
         }
     }
