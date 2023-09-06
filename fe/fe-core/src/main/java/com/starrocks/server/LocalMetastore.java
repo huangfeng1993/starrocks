@@ -1938,9 +1938,8 @@ public class LocalMetastore implements ConnectorMetadata, MVRepairHandler, Memor
             int partitionCount = endIndex - i;
             int indexCountPerPartition = partitions.get(i).getMaterializedIndices(IndexExtState.VISIBLE).size();
             int timeout = Config.tablet_create_timeout_second * countMaxTasksPerBackend(tasks);
-            // Compatible with older versions, `Config.max_create_table_timeout_second` is the timeout time for a single index.
-            // Here we assume that all partitions have the same number of indexes.
-            int maxTimeout = partitionCount * indexCountPerPartition * Config.max_create_table_timeout_second;
+
+            int maxTimeout = Config.max_create_table_timeout_second;
             try {
                 LOG.info("build partitions sequentially, send task one by one, all tasks timeout {}s",
                         Math.min(timeout, maxTimeout));
@@ -1963,7 +1962,7 @@ public class LocalMetastore implements ConnectorMetadata, MVRepairHandler, Memor
         int timeout = Math.max(1, numReplicas / numBackends) * Config.tablet_create_timeout_second;
         int numIndexes = partitions.stream().mapToInt(
                 partition -> partition.getMaterializedIndices(IndexExtState.VISIBLE).size()).sum();
-        int maxTimeout = numIndexes * Config.max_create_table_timeout_second;
+        int maxTimeout = Config.max_create_table_timeout_second;
         MarkedCountDownLatch<Long, Long> countDownLatch = new MarkedCountDownLatch<>(numReplicas);
         Map<Long, List<Long>> taskSignatures = new HashMap<>();
         try {
