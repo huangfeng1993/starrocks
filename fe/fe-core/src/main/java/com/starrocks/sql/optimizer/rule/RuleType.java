@@ -226,6 +226,8 @@ public enum RuleType {
     IMP_STREAM_JOIN,
     IMP_BINLOG_SCAN,
 
+    TIME_ZONE_TRANSFORM,
+
     NUM_RULES;
 
     public int id() {

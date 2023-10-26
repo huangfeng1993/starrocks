@@ -119,6 +119,18 @@ public class ColumnRefFactory {
         columnRefToTable.put(columnRef, table);
     }
 
+    public void updateColumnRefToColumns(ColumnRefOperator columnRef) {
+        Column column = columnRefToColumns.remove(columnRef);
+        Table table = columnRefToTable.remove(columnRef);
+
+        if (column != null) {
+            columnRefToColumns.put(columnRef, column);
+        }
+        if (table != null) {
+            columnRefToTable.put(columnRef, table);
+        }
+    }
+
     public Column getColumn(ColumnRefOperator columnRef) {
         return columnRefToColumns.get(columnRef);
     }

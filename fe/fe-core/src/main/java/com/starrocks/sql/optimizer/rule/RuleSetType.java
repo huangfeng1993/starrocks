@@ -41,5 +41,8 @@ public enum RuleSetType {
     META_SCAN_REWRITE,
     ELIMINATE_GROUP_BY,
 
+    TIME_ZONE_TRANSFORM,
+
     NUM_RULE_SET
+
 }

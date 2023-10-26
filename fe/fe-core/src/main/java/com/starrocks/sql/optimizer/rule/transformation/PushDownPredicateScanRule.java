@@ -88,8 +88,13 @@ public class PushDownPredicateScanRule extends TransformationRule {
                 .stream().map(rangeExtractor::rewriteOnlyColumn).collect(Collectors.toList())));
         Preconditions.checkState(predicates != null);
 
-        predicates = scalarOperatorRewriter.rewrite(predicates,
-                ScalarOperatorRewriter.DEFAULT_REWRITE_SCAN_PREDICATE_RULES);
+        if (context.getSessionVariable().enableTimeZoneTransformation()) {
+            predicates = scalarOperatorRewriter.rewrite(predicates,
+                    ScalarOperatorRewriter.TRANSFORMATION_TZ_PREDICATE_REWRITE_RULES);
+        } else {
+            predicates = scalarOperatorRewriter.rewrite(predicates,
+                    ScalarOperatorRewriter.DEFAULT_REWRITE_SCAN_PREDICATE_RULES);
+        }
         predicates = Utils.transTrue2Null(predicates);
 
         // clone a new scan operator and rewrite predicate.

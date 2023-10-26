@@ -293,6 +293,13 @@ public class SessionVariable implements Serializable, Writable, Cloneable {
     public static final String BROADCAST_RIGHT_TABLE_SCALE_FACTOR =
             "broadcast_right_table_scale_factor";
     public static final String NEW_PLANNER_OPTIMIZER_TIMEOUT = "new_planner_optimize_timeout";
+
+    public static final String ENABLE_TIME_ZONE_TRANSFORMATION = "enable_timezone_transformation";
+
+    public static final String TARGET_TIME_ZONE = "target_time_zone";
+
+    public static final String SOURCE_TIME_ZONE = "source_time_zone";
+
     public static final String ENABLE_GROUPBY_USE_OUTPUT_ALIAS = "enable_groupby_use_output_alias";
     public static final String ENABLE_QUERY_DUMP = "enable_query_dump";
     public static final String QUERY_DEBUG_OPTIONS = "query_debug_options";
@@ -1129,6 +1136,14 @@ public class SessionVariable implements Serializable, Writable, Cloneable {
 
     @VariableMgr.VarAttr(name = OPTIMIZER_MATERIALIZED_VIEW_TIMELIMIT)
     private long optimizerMaterializedViewTimeLimitMillis = 1000;
+    @VariableMgr.VarAttr(name = ENABLE_TIME_ZONE_TRANSFORMATION)
+    private boolean enableTimeZoneTransform = false;
+
+    @VariableMgr.VarAttr(name = SOURCE_TIME_ZONE)
+    private String sourceTimeZone = "Asia/Shanghai";
+
+    @VariableMgr.VarAttr(name = TARGET_TIME_ZONE)
+    private String targetTimeZone = "US/Alaska";
 
     @VariableMgr.VarAttr(name = ENABLE_QUERY_DUMP)
     private boolean enableQueryDump = false;
@@ -2545,6 +2560,18 @@ public class SessionVariable implements Serializable, Writable, Cloneable {
 
     public void setOptimizerMaterializedViewTimeLimitMillis(long millis) {
         this.optimizerMaterializedViewTimeLimitMillis = millis;
+    }
+
+    public String getSourceTimeZone() {
+        return sourceTimeZone;
+    }
+
+    public String getTargetTimeZone() {
+        return targetTimeZone;
+    }
+
+    public boolean enableTimeZoneTransformation() {
+        return enableTimeZoneTransform;
     }
 
     public boolean getEnableGroupbyUseOutputAlias() {

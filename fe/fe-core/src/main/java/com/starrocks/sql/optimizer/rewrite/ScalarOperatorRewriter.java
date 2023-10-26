@@ -22,6 +22,7 @@ import com.starrocks.sql.optimizer.operator.scalar.ColumnRefOperator;
 import com.starrocks.sql.optimizer.operator.scalar.ScalarOperator;
 import com.starrocks.sql.optimizer.rewrite.scalar.ArithmeticCommutativeRule;
 import com.starrocks.sql.optimizer.rewrite.scalar.ConsolidateLikesRule;
+import com.starrocks.sql.optimizer.rewrite.scalar.DateTimeCommutativeRule;
 import com.starrocks.sql.optimizer.rewrite.scalar.ExtractCommonPredicateRule;
 import com.starrocks.sql.optimizer.rewrite.scalar.FoldConstantsRule;
 import com.starrocks.sql.optimizer.rewrite.scalar.ImplicitCastRule;
@@ -81,6 +82,13 @@ public class ScalarOperatorRewriter {
     public static final List<ScalarOperatorRewriteRule> MV_SCALAR_REWRITE_RULES = DEFAULT_REWRITE_SCAN_PREDICATE_RULES.stream()
             .map(rule -> rule instanceof NormalizePredicateRule ? new MvNormalizePredicateRule() : rule)
             .collect(Collectors.toList());
+    public static final List<ScalarOperatorRewriteRule> TRANSFORMATION_TZ_PREDICATE_REWRITE_RULES = Lists.newArrayList();
+
+    static {
+        TRANSFORMATION_TZ_PREDICATE_REWRITE_RULES.addAll(DEFAULT_REWRITE_SCAN_PREDICATE_RULES);
+        TRANSFORMATION_TZ_PREDICATE_REWRITE_RULES.add(new DateTimeCommutativeRule());
+    }
+
 
     private final ScalarOperatorRewriteContext context;
 

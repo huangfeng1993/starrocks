@@ -49,6 +49,8 @@ public final class LogicalOlapScanOperator extends LogicalScanOperator {
     // record if this scan is derived from SplitScanORToUnionRule
     private boolean fromSplitOR;
 
+    private boolean hasTransformTz;
+
     // Only for UT
     public LogicalOlapScanOperator(Table table) {
         this(table, Maps.newHashMap(), Maps.newHashMap(), null, Operator.DEFAULT_LIMIT, null);
@@ -154,6 +156,10 @@ public final class LogicalOlapScanOperator extends LogicalScanOperator {
         return prunedPartitionPredicates;
     }
 
+    public boolean hasTransformTz() {
+        return hasTransformTz;
+    }
+
     public boolean isFromSplitOR() {
         return fromSplitOR;
     }
@@ -195,6 +201,7 @@ public final class LogicalOlapScanOperator extends LogicalScanOperator {
 
     public static class Builder
             extends LogicalScanOperator.Builder<LogicalOlapScanOperator, LogicalOlapScanOperator.Builder> {
+
         @Override
         protected LogicalOlapScanOperator newInstance() {
             return new LogicalOlapScanOperator();
@@ -272,5 +279,11 @@ public final class LogicalOlapScanOperator extends LogicalScanOperator {
             builder.usePkIndex = usePkIndex;
             return this;
         }
+
+        public Builder setHasTransformTz(boolean hasTransformTz) {
+            builder.hasTransformTz = hasTransformTz;
+            return this;
+        }
+
     }
 }

@@ -79,6 +79,7 @@ import com.starrocks.sql.optimizer.rule.transformation.MergeLimitWithSortRule;
 import com.starrocks.sql.optimizer.rule.transformation.MergeTwoFiltersRule;
 import com.starrocks.sql.optimizer.rule.transformation.MergeTwoProjectRule;
 import com.starrocks.sql.optimizer.rule.transformation.PartitionPruneRule;
+import com.starrocks.sql.optimizer.rule.transformation.ProjectTimeZoneRule;
 import com.starrocks.sql.optimizer.rule.transformation.PruneAggregateColumnsRule;
 import com.starrocks.sql.optimizer.rule.transformation.PruneAssertOneRowRule;
 import com.starrocks.sql.optimizer.rule.transformation.PruneCTEConsumeColumnsRule;
@@ -381,6 +382,10 @@ public class RuleSet {
         REWRITE_RULES.put(RuleSetType.INLINE_CTE, ImmutableList.of(
                 new InlineOneCTEConsumeRule(),
                 new PruneCTEProduceRule()
+        ));
+
+        REWRITE_RULES.put(RuleSetType.TIME_ZONE_TRANSFORM, ImmutableList.of(
+                new ProjectTimeZoneRule()
         ));
 
         REWRITE_RULES.put(RuleSetType.INTERSECT_REWRITE, ImmutableList.of(
