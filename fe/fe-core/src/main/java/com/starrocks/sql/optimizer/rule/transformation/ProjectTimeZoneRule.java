@@ -30,12 +30,14 @@ import com.starrocks.sql.optimizer.operator.logical.LogicalOlapScanOperator;
 import com.starrocks.sql.optimizer.operator.logical.LogicalProjectOperator;
 import com.starrocks.sql.optimizer.operator.pattern.Pattern;
 import com.starrocks.sql.optimizer.operator.scalar.CallOperator;
+import com.starrocks.sql.optimizer.operator.scalar.CastOperator;
 import com.starrocks.sql.optimizer.operator.scalar.ColumnRefOperator;
 import com.starrocks.sql.optimizer.operator.scalar.ConstantOperator;
 import com.starrocks.sql.optimizer.operator.scalar.ScalarOperator;
 import com.starrocks.sql.optimizer.rewrite.ReplaceColumnRefRewriter;
 import com.starrocks.sql.optimizer.rule.RuleType;
 
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 
@@ -63,7 +65,7 @@ public class ProjectTimeZoneRule extends TransformationRule {
         Map<ColumnRefOperator, ScalarOperator> projectMap = Maps.newHashMap();
         ColumnRefFactory columnRefFactory = context.getColumnRefFactory();
         for (ColumnRefOperator col : logicalOlapScan.getColRefToColumnMetaMap().keySet()) {
-            if (col.getType().isDatetime()) {
+            if (col.getType().isDateType()) {
                 ColumnRefOperator newCol = columnRefFactory.create(col, col.getType(), col.isNullable());
                 dateColToNewCol.put(col, newCol);
                 projectMap.put(col, convertTZ(context, newCol));
@@ -100,13 +102,29 @@ public class ProjectTimeZoneRule extends TransformationRule {
     }
 
     private CallOperator convertTZ(OptimizerContext context, ScalarOperator col) {
+        // for check timzone is valid
+        ZoneId.of(context.getSessionVariable().getSourceTimeZone());
+        ZoneId.of(context.getSessionVariable().getTargetTimeZone());
+
+        boolean isDate = col.getType().isDate();
+        if (isDate) {
+            col = new CastOperator(Type.DATETIME, col);
+        }
+
         Type[] argTypes = new Type[] {Type.DATETIME, Type.VARCHAR, Type.VARCHAR};
         Function func =
                 Expr.getBuiltinFunction(FunctionSet.CONVERT_TZ, argTypes, Function.CompareMode.IS_IDENTICAL);
         ConstantOperator sourceTz = ConstantOperator.createVarchar(context.getSessionVariable().getSourceTimeZone());
         ConstantOperator targetTz = ConstantOperator.createVarchar(context.getSessionVariable().getTargetTimeZone());
-        return new CallOperator(FunctionSet.CONVERT_TZ, Type.DATETIME, Lists.newArrayList(col, sourceTz, targetTz),
-                func);
+
+        CallOperator convertTzOperator =
+                new CallOperator(FunctionSet.CONVERT_TZ, Type.DATETIME, Lists.newArrayList(col, sourceTz, targetTz),
+                        func);
+
+        if (isDate) {
+            convertTzOperator = new CastOperator(Type.DATE, convertTzOperator);
+        }
+        return convertTzOperator;
     }
 
 }
