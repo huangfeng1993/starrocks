@@ -14,10 +14,8 @@
 
 package com.starrocks.connector.jdbc;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.starrocks.catalog.JDBCTable;
 import com.starrocks.catalog.PrimitiveType;
 import com.starrocks.catalog.ScalarType;
 import com.starrocks.catalog.Table;
@@ -26,7 +24,6 @@ import com.starrocks.connector.exception.StarRocksConnectorException;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -160,7 +157,8 @@ public class MysqlSchemaResolver extends JDBCSchemaResolver {
 
     @Override
     public List<String> listPartitionNames(Connection connection, String databaseName, String tableName) {
-        String partitionNamesQuery =
+        return Lists.newArrayList();
+        /*String partitionNamesQuery =
                 "SELECT PARTITION_DESCRIPTION as NAME FROM INFORMATION_SCHEMA.PARTITIONS WHERE TABLE_SCHEMA = ? " +
                 "AND TABLE_NAME = ? AND PARTITION_NAME IS NOT NULL";
         try (PreparedStatement ps = connection.prepareStatement(partitionNamesQuery)) {
@@ -182,12 +180,13 @@ public class MysqlSchemaResolver extends JDBCSchemaResolver {
             }
         } catch (SQLException | NullPointerException e) {
             throw new StarRocksConnectorException(e.getMessage(), e);
-        }
+        }*/
     }
 
     @Override
     public List<String> listPartitionColumns(Connection connection, String databaseName, String tableName) {
-        String partitionColumnsQuery = "SELECT DISTINCT PARTITION_EXPRESSION FROM INFORMATION_SCHEMA.PARTITIONS " +
+        return Lists.newArrayList();
+        /*String partitionColumnsQuery = "SELECT DISTINCT PARTITION_EXPRESSION FROM INFORMATION_SCHEMA.PARTITIONS " +
                 "WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND PARTITION_NAME IS NOT NULL";
         try (PreparedStatement ps = connection.prepareStatement(partitionColumnsQuery)) {
             ps.setString(1, databaseName);
@@ -206,11 +205,12 @@ public class MysqlSchemaResolver extends JDBCSchemaResolver {
             }
         } catch (SQLException | NullPointerException e) {
             throw new StarRocksConnectorException(e.getMessage(), e);
-        }
+        }*/
     }
 
     public List<Partition> getPartitions(Connection connection, Table table) {
-        JDBCTable jdbcTable = (JDBCTable) table;
+        return Lists.newArrayList();
+        /*JDBCTable jdbcTable = (JDBCTable) table;
         String query = getPartitionQuery(table);
         try (PreparedStatement ps = connection.prepareStatement(query)) {
             ps.setString(1, jdbcTable.getDbName());
@@ -232,7 +232,7 @@ public class MysqlSchemaResolver extends JDBCSchemaResolver {
             }
         } catch (SQLException | NullPointerException e) {
             throw new StarRocksConnectorException(e.getMessage(), e);
-        }
+        }*/
     }
 
     /**
