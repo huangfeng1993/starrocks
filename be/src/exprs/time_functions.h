@@ -709,6 +709,11 @@ public:
     DEFINE_VECTORIZED_FN(from_unix_to_datetime_with_format_64);
     DEFINE_VECTORIZED_FN(from_unix_to_datetime_with_format_32);
 
+    DEFINE_VECTORIZED_FN(from_double_unix_to_datetime);
+
+    DEFINE_VECTORIZED_FN(from_double_unix_to_datetime_with_format);
+
+
     /**
      * return number of seconds in this day.
      * @param: [varchar]
@@ -814,8 +819,12 @@ private:
     static StatusOr<ColumnPtr> _t_from_unix_with_format_const(std::string& format_content, FunctionContext* context,
                                                               const starrocks::Columns& columns);
 
-    static StatusOr<ColumnPtr> convert_tz_general(FunctionContext* context, const Columns& columns);
+    static StatusOr<ColumnPtr> from_double_unix_with_format_general(FunctionContext* context,
+                                                   const starrocks::Columns& columns);
+    static StatusOr<ColumnPtr> from_double_unix_with_format_const(std::string& format_content, FunctionContext* context,
+                                                 const starrocks::Columns& columns);
 
+    static StatusOr<ColumnPtr> convert_tz_general(FunctionContext* context, const Columns& columns);
     static StatusOr<ColumnPtr> convert_tz_const(FunctionContext* context, const Columns& columns,
                                                 const cctz::time_zone& from, const cctz::time_zone& to);
 

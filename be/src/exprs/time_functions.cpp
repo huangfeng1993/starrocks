@@ -15,6 +15,7 @@
 #include "exprs/time_functions.h"
 
 #include <algorithm>
+#include <math.h>
 #include <string_view>
 #include <unordered_map>
 
@@ -1704,6 +1705,105 @@ StatusOr<ColumnPtr> TimeFunctions::_t_from_unix_with_format(FunctionContext* con
     return _t_from_unix_with_format_general<TIMESTAMP_TYPE>(context, columns);
 }
 
+StatusOr<ColumnPtr> TimeFunctions::from_double_unix_to_datetime_with_format(FunctionContext* context,
+                                                            const starrocks::Columns& columns) {
+    DCHECK_EQ(columns.size(), 2);
+    auto* state = reinterpret_cast<FromUnixState*>(context->get_function_state(FunctionContext::FRAGMENT_LOCAL));
+    if (state->const_format) {
+        std::string format_content = state->format_content;
+        return from_double_unix_with_format_const(format_content, context, columns);
+    }
+    return from_double_unix_with_format_general(context, columns);
+}
+
+StatusOr<ColumnPtr> TimeFunctions::from_double_unix_with_format_general(FunctionContext* context, const Columns& columns) {
+    DCHECK_EQ(columns.size(), 2);
+
+    RETURN_IF_COLUMNS_ONLY_NULL(columns);
+
+    ColumnViewer<TYPE_DOUBLE> data_column(columns[0]);
+    ColumnViewer<TYPE_VARCHAR> format_column(columns[1]);
+
+    auto size = columns[0]->size();
+    ColumnBuilder<TYPE_VARCHAR> result(size);
+    for (int row = 0; row < size; ++row) {
+        if (data_column.is_null(row) || format_column.is_null(row)) {
+            result.append_null();
+            continue;
+        }
+
+        auto date = floor(data_column.value(row));
+        auto format = format_column.value(row);
+        if (date < 0 || date > MAX_UNIX_TIMESTAMP || format.empty()) {
+            result.append_null();
+            continue;
+        }
+
+        DateTimeValue dtv;
+        if (!dtv.from_unixtime(date, context->state()->timezone_obj())) {
+            result.append_null();
+            continue;
+        }
+        // use lambda to avoid adding method for TimeFunctions.
+        if (format.size > DEFAULT_DATE_FORMAT_LIMIT) {
+            result.append_null();
+            continue;
+        }
+
+        std::string new_fmt = convert_format(format);
+
+        char buf[128];
+        if (!dtv.to_format_string((const char*)new_fmt.c_str(), new_fmt.size(), buf)) {
+            result.append_null();
+            continue;
+        }
+        result.append(Slice(buf));
+    }
+
+    return result.build(ColumnHelper::is_all_const(columns));
+}
+
+
+StatusOr<ColumnPtr> TimeFunctions::from_double_unix_with_format_const(std::string& format_content, FunctionContext* context,
+                                                                  const Columns& columns) {
+    DCHECK_EQ(columns.size(), 2);
+
+    RETURN_IF_COLUMNS_ONLY_NULL(columns);
+
+    ColumnViewer<TYPE_DOUBLE> data_column(columns[0]);
+
+    auto size = columns[0]->size();
+    ColumnBuilder<TYPE_VARCHAR> result(size);
+    for (int row = 0; row < size; ++row) {
+        if (data_column.is_null(row) || format_content.empty()) {
+            result.append_null();
+            continue;
+        }
+
+        auto date = floor(data_column.value(row));
+        if (date < 0 || date > MAX_UNIX_TIMESTAMP) {
+            result.append_null();
+            continue;
+        }
+
+        DateTimeValue dtv;
+        if (!dtv.from_unixtime(date, context->state()->timezone_obj())) {
+            result.append_null();
+            continue;
+        }
+
+        char buf[128];
+        if (!dtv.to_format_string((const char*)format_content.c_str(), format_content.size(), buf)) {
+            result.append_null();
+            continue;
+        }
+        result.append(Slice(buf));
+    }
+
+    return result.build(ColumnHelper::is_all_const(columns));
+}
+
+
 StatusOr<ColumnPtr> TimeFunctions::from_unix_to_datetime_with_format_64(FunctionContext* context,
                                                                         const starrocks::Columns& columns) {
     return _t_from_unix_with_format<TYPE_BIGINT>(context, columns);
@@ -1713,6 +1813,42 @@ StatusOr<ColumnPtr> TimeFunctions::from_unix_to_datetime_with_format_32(Function
     return _t_from_unix_with_format<TYPE_INT>(context, columns);
 }
 
+
+StatusOr<ColumnPtr> TimeFunctions::from_double_unix_to_datetime(FunctionContext* context,
+                                                                        const starrocks::Columns& columns) {
+      DCHECK_EQ(columns.size(), 1);
+
+      RETURN_IF_COLUMNS_ONLY_NULL(columns);
+
+      ColumnViewer<TYPE_DOUBLE> data_column(columns[0]);
+
+      auto size = columns[0]->size();
+      ColumnBuilder<TYPE_VARCHAR> result(size);
+      for (int row = 0; row < size; ++row) {
+          if (data_column.is_null(row)) {
+              result.append_null();
+              continue;
+          }
+
+
+          auto date = floor(data_column.value(row));
+          if (date < 0 || date > MAX_UNIX_TIMESTAMP) {
+              result.append_null();
+              continue;
+          }
+
+          DateTimeValue dtv;
+          if (!dtv.from_unixtime(date, context->state()->timezone_obj())) {
+              result.append_null();
+              continue;
+          }
+          char buf[64];
+          dtv.to_string(buf);
+          result.append(Slice(buf));
+      }
+
+      return result.build(ColumnHelper::is_all_const(columns));
+}
 /*
  * end definition for from_unix operators
  */

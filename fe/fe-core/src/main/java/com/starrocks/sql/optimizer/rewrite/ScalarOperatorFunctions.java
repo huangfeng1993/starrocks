@@ -634,12 +634,15 @@ public class ScalarOperatorFunctions {
 
     @ConstantFunction.List(list = {
             @ConstantFunction(name = "from_unixtime", argTypes = {INT}, returnType = VARCHAR),
-            @ConstantFunction(name = "from_unixtime", argTypes = {BIGINT}, returnType = VARCHAR)
+            @ConstantFunction(name = "from_unixtime", argTypes = {BIGINT}, returnType = VARCHAR),
+            @ConstantFunction(name = "from_unixtime", argTypes = {DOUBLE}, returnType = VARCHAR)
     })
     public static ConstantOperator fromUnixTime(ConstantOperator unixTime) throws AnalysisException {
         long value = 0;
         if (unixTime.getType().isInt()) {
             value = unixTime.getInt();
+        } else if (unixTime.getType().isDouble()) {
+            value = (int) unixTime.getDouble();
         } else {
             value = unixTime.getBigint();
         }
@@ -670,13 +673,16 @@ public class ScalarOperatorFunctions {
 
     @ConstantFunction.List(list = {
             @ConstantFunction(name = "from_unixtime", argTypes = {INT, VARCHAR}, returnType = VARCHAR),
-            @ConstantFunction(name = "from_unixtime", argTypes = {BIGINT, VARCHAR}, returnType = VARCHAR)
+            @ConstantFunction(name = "from_unixtime", argTypes = {BIGINT, VARCHAR}, returnType = VARCHAR),
+            @ConstantFunction(name = "from_unixtime", argTypes = {DOUBLE, VARCHAR}, returnType = VARCHAR)
     })
     public static ConstantOperator fromUnixTime(ConstantOperator unixTime, ConstantOperator fmtLiteral)
             throws AnalysisException {
         long value = 0;
         if (unixTime.getType().isInt()) {
             value = unixTime.getInt();
+        } else if (unixTime.getType().isDouble()) {
+            value = (int) unixTime.getDouble();
         } else {
             value = unixTime.getBigint();
         }

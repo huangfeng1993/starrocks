@@ -785,6 +785,7 @@ public class FunctionSet {
         ArithmeticExpr.initBuiltins(this);
         TableFunction.initBuiltins(this);
         VectorizedBuiltinFunctions.initBuiltins(this);
+//        this.addVectorizedScalarBuiltin(50306, "from_unixtime", false, Type.VARCHAR, Type.DOUBLE);
         initAggregateBuiltins();
     }
 
