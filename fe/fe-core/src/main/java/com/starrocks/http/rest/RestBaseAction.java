@@ -40,6 +40,7 @@ import com.google.common.base.Strings;
 import com.starrocks.common.DdlException;
 import com.starrocks.common.ErrorCode;
 import com.starrocks.common.Pair;
+import com.starrocks.common.util.NetUtils;
 import com.starrocks.common.util.UUIDUtil;
 import com.starrocks.http.ActionController;
 import com.starrocks.http.BaseAction;
@@ -174,9 +175,18 @@ public class RestBaseAction extends BaseAction {
         String urlStr = request.getRequest().uri();
         URI urlObj;
         URI resultUriObj;
+        String ip = addr.hostname;
+        try {
+            Pair<String, String> pair = NetUtils.getIpAndFqdnByHost(addr.getHostname());
+            ip = pair.first;
+        } catch (Exception e) {
+            LOG.warn(e.getMessage());
+        }
+        LOG.info("redirect to leader: {}:{} for url: {}", ip, addr.getPort(), urlStr);
+
         try {
             urlObj = new URI(urlStr);
-            resultUriObj = new URI("http", null, addr.getHostname(),
+            resultUriObj = new URI("http", null, ip,
                     addr.getPort(), urlObj.getPath(), urlObj.getQuery(), null);
         } catch (URISyntaxException e) {
             LOG.warn(e.getMessage());
