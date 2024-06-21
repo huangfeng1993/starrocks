@@ -75,7 +75,7 @@ std::string to_load_error_http_path(const std::string& file_name) {
         return "";
     }
     std::stringstream url;
-    url << "http://" << BackendOptions::get_localhost() << ":" << config::be_http_port << "/api/_load_error_log?"
+    url << "http://" << BackendOptions::get_localhost_ip() << ":" << config::be_http_port << "/api/_load_error_log?"
         << "file=" << file_name;
     return url.str();
 }

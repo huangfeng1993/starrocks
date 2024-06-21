@@ -31,6 +31,7 @@ namespace starrocks {
 static const std::string PRIORITY_CIDR_SEPARATOR = ";";
 
 std::string BackendOptions::_s_localhost;
+std::string BackendOptions::_s_localhost_ip;
 std::vector<CIDR> BackendOptions::_s_priority_cidrs;
 TBackend BackendOptions::_backend;
 
@@ -81,12 +82,18 @@ bool BackendOptions::init(bool is_cn) {
         LOG(INFO) << "fail to find one valid non-loopback address, use loopback address.";
         _s_localhost = loopback;
     }
+
+    _s_localhost_ip = _s_localhost;
     LOG(INFO) << "localhost " << _s_localhost;
     return true;
 }
 
 std::string BackendOptions::get_localhost() {
     return _s_localhost;
+}
+
+std::string BackendOptions::get_localhost_ip() {
+    return _s_localhost_ip;
 }
 
 TBackend BackendOptions::get_localBackend() {

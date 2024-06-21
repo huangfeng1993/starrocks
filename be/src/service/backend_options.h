@@ -32,6 +32,7 @@ class BackendOptions {
 public:
     static bool init(bool is_cn);
     static std::string get_localhost();
+    static std::string get_localhost_ip();
     static TBackend get_localBackend();
     static void set_localhost(const std::string& host);
     static bool is_cn();
@@ -41,6 +42,7 @@ private:
     static bool is_in_prior_network(const std::string& ip);
 
     static std::string _s_localhost;
+    static std::string _s_localhost_ip;
     static std::vector<CIDR> _s_priority_cidrs;
     static TBackend _backend;
     static bool _is_cn;
