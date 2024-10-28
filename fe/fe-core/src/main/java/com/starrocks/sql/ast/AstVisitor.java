@@ -58,6 +58,14 @@ import com.starrocks.sql.ast.pipe.DescPipeStmt;
 import com.starrocks.sql.ast.pipe.DropPipeStmt;
 import com.starrocks.sql.ast.pipe.PipeName;
 import com.starrocks.sql.ast.pipe.ShowPipeStmt;
+import com.starrocks.sql.ast.warehouse.CreateWarehouseStmt;
+import com.starrocks.sql.ast.warehouse.DropWarehouseStmt;
+import com.starrocks.sql.ast.warehouse.ResumeWarehouseStmt;
+import com.starrocks.sql.ast.warehouse.SetWarehouseStmt;
+import com.starrocks.sql.ast.warehouse.ShowClustersStmt;
+import com.starrocks.sql.ast.warehouse.ShowNodesStmt;
+import com.starrocks.sql.ast.warehouse.ShowWarehousesStmt;
+import com.starrocks.sql.ast.warehouse.SuspendWarehouseStmt;
 
 public abstract class AstVisitor<R, C> {
     public R visit(ParseNode node) {
@@ -101,7 +109,37 @@ public abstract class AstVisitor<R, C> {
 
     // ---------------------------------------- Warehouse Statement ----------------------------------------------------
 
+    // ---------------------------------------- Warehouse Statement ----------------------------------------------------
+
     public R visitShowWarehousesStatement(ShowWarehousesStmt statement, C context) {
+        return visitShowStatement(statement, context);
+    }
+
+    public R visitShowClusterStatement(ShowClustersStmt statement, C context) {
+        return visitShowStatement(statement, context);
+    }
+
+    public R visitCreateWarehouseStatement(CreateWarehouseStmt statement, C context) {
+        return visitDDLStatement(statement, context);
+    }
+
+    public R visitDropWarehouseStatement(DropWarehouseStmt statement, C context) {
+        return visitDDLStatement(statement, context);
+    }
+
+    public R visitSuspendWarehouseStatement(SuspendWarehouseStmt statement, C context) {
+        return visitDDLStatement(statement, context);
+    }
+
+    public R visitResumeWarehouseStatement(ResumeWarehouseStmt statement, C context) {
+        return visitDDLStatement(statement, context);
+    }
+
+    public R visitSetWarehouseStatement(SetWarehouseStmt statement, C context) {
+        return visitStatement(statement, context);
+    }
+
+    public R visitShowNodesStatement(ShowNodesStmt statement, C context) {
         return visitShowStatement(statement, context);
     }
 

@@ -770,7 +770,7 @@ setWarehouseStatement
     ;
 
 showWarehousesStatement
-    : SHOW WAREHOUSES ((LIKE pattern=string) | (WHERE expression))?
+    : SHOW WAREHOUSES (LIKE pattern=string)?
     ;
 
 showClustersStatement
