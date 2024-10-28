@@ -419,4 +419,22 @@ public class Authorizer {
             }
         }
     }
+
+    public static void checkWarehouseAction(UserIdentity currentUser, Set<Long> roleIds, String name,
+                                            PrivilegeType privilegeType) throws AccessDeniedException {
+        if (notAdmin(currentUser)) {
+            throw new AccessDeniedException("not root");
+        }
+    }
+
+    public static void checkAnyActionOnWarehouse(UserIdentity currentUser, Set<Long> roleIds, String name)
+            throws AccessDeniedException {
+        if (notAdmin(currentUser)) {
+            throw new AccessDeniedException("not root");
+        }
+    }
+
+    private static boolean notAdmin(UserIdentity currentUser) {
+        return !"root".equals(currentUser.getUser());
+    }
 }

@@ -586,6 +586,8 @@ public class SessionVariable implements Serializable, Writable, Cloneable {
 
     public static final String GROUP_CONCAT_MAX_LEN = "group_concat_max_len";
 
+    public static final String WAREHOUSE_NAME = "warehouse";
+
     // These parameters are experimental. They may be removed in the future
     public static final String SPILL_MEM_TABLE_SIZE = "spill_mem_table_size";
     public static final String SPILL_MEM_TABLE_NUM = "spill_mem_table_num";

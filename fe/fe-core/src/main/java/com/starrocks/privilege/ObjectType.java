@@ -68,6 +68,11 @@ public class ObjectType {
     public static final ObjectType PIPE = new ObjectType(13);
     public static final ObjectType COLUMN = new ObjectType(14);
 
+    /**
+     * NOTICE: ObjectType cannot use a value exceeding 20000, please follow the above sequence number
+     */
+    public static final ObjectType WAREHOUSE = new ObjectType(20003);
+
     public static final Set<ObjectType> VALID_OBJECT_TYPE = new ImmutableSet.Builder<ObjectType>().add(
             TABLE,
             DATABASE,
@@ -82,7 +87,8 @@ public class ObjectType {
             GLOBAL_FUNCTION,
             STORAGE_VOLUME,
             PIPE,
-            COLUMN
+            COLUMN,
+            WAREHOUSE
     ).build();
 
     public static final Map<Integer, Pair<String, String>> OBJECT_TO_NAME =
