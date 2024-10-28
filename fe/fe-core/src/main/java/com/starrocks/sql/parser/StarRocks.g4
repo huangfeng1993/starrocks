@@ -31,8 +31,14 @@ statement
     : queryStatement
 
     // Warehouse Statement
+    | createWarehouseStatement
+    | dropWarehouseStatement
+    | suspendWarehouseStatement
+    | resumeWarehouseStatement
+    | setWarehouseStatement
     | showWarehousesStatement
     | showClustersStatement
+    | showNodesStatement
 
     // Database Statement
     | useDatabaseStatement
@@ -738,11 +744,7 @@ alterCatalogStatement
 
 createWarehouseStatement
     : CREATE (WAREHOUSE) (IF NOT EXISTS)? warehouseName=identifierOrString
-    properties?
-    ;
-
-showWarehousesStatement
-    : SHOW WAREHOUSES ((LIKE pattern=string) | (WHERE expression))?
+     comment? properties?
     ;
 
 dropWarehouseStatement
@@ -755,10 +757,6 @@ alterWarehouseStatement
     | ALTER WAREHOUSE identifier SET propertyList
     ;
 
-showClustersStatement
-    : SHOW CLUSTERS FROM WAREHOUSE identifier
-    ;
-
 suspendWarehouseStatement
     : SUSPEND WAREHOUSE (IF EXISTS)? identifier
     ;
@@ -766,6 +764,25 @@ suspendWarehouseStatement
 resumeWarehouseStatement
     : RESUME WAREHOUSE (IF EXISTS)? identifier
     ;
+
+setWarehouseStatement
+    : SET SESSION? WAREHOUSE EQ? identifierOrString
+    ;
+
+showWarehousesStatement
+    : SHOW WAREHOUSES (LIKE pattern=string)?
+    ;
+
+showClustersStatement
+    : SHOW CLUSTERS FROM WAREHOUSE identifier
+    ;
+
+showNodesStatement
+    : SHOW NODES FROM WAREHOUSES (LIKE pattern=string)?
+    | SHOW NODES FROM WAREHOUSE identifier
+    ;
+
+
 
 // ---------------------------------------- Storage Volume Statement ---------------------------------------------------
 
@@ -897,11 +914,11 @@ modifyFrontendHostClause
   ;
 
 addBackendClause
-   : ADD BACKEND string (',' string)*
+   : ADD BACKEND string (',' string)* (INTO WAREHOUSE warehouseName=identifierOrString)?
    ;
 
 dropBackendClause
-   : DROP BACKEND string (',' string)* FORCE?
+   : DROP BACKEND string (',' string)* (FROM WAREHOUSE warehouseName=identifierOrString)? FORCE?
    ;
 
 decommissionBackendClause
@@ -914,11 +931,11 @@ modifyBackendClause
    ;
 
 addComputeNodeClause
-   : ADD COMPUTE NODE string (',' string)*
+   : ADD COMPUTE NODE string (',' string)* (INTO WAREHOUSE warehouseName=identifierOrString)?
    ;
 
 dropComputeNodeClause
-   : DROP COMPUTE NODE string (',' string)*
+   : DROP COMPUTE NODE string (',' string)* (FROM WAREHOUSE warehouseName=identifierOrString)?
    ;
 
 modifyBrokerClause

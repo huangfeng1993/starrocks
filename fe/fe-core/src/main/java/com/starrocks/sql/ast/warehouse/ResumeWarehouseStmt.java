@@ -12,21 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.starrocks.sql.ast;
+package com.starrocks.sql.ast.warehouse;
 
+import com.starrocks.sql.ast.AstVisitor;
+import com.starrocks.sql.ast.DdlStmt;
 import com.starrocks.sql.parser.NodePosition;
 
-import java.util.List;
+public class ResumeWarehouseStmt extends DdlStmt {
+    private String warehouseName;
 
-public class AddComputeNodeClause extends ComputeNodeClause {
-    private final String warehouse;
-
-    public AddComputeNodeClause(List<String> hostPorts, String warehouse, NodePosition pos) {
-        super(hostPorts, pos);
-        this.warehouse = warehouse;
+    public ResumeWarehouseStmt(String warehouseName) {
+        this(warehouseName, NodePosition.ZERO);
     }
 
-    public String getWarehouse() {
-        return warehouse;
+    public ResumeWarehouseStmt(String warehouseName, NodePosition pos) {
+        super(pos);
+        this.warehouseName = warehouseName;
+    }
+
+    public String getWarehouseName() {
+        return warehouseName;
+    }
+
+    @Override
+    public <R, C> R accept(AstVisitor<R, C> visitor, C context) {
+        return visitor.visitResumeWarehouseStatement(this, context);
     }
 }
