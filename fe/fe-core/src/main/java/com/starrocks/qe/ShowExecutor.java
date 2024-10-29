@@ -221,6 +221,7 @@ import com.starrocks.sql.ast.UserIdentity;
 import com.starrocks.sql.ast.pipe.DescPipeStmt;
 import com.starrocks.sql.ast.pipe.PipeName;
 import com.starrocks.sql.ast.pipe.ShowPipeStmt;
+import com.starrocks.sql.ast.warehouse.ShowNodesStmt;
 import com.starrocks.sql.ast.warehouse.ShowWarehousesStmt;
 import com.starrocks.sql.common.MetaUtils;
 import com.starrocks.statistic.AnalyzeJob;
@@ -234,6 +235,7 @@ import com.starrocks.system.SystemInfoService;
 import com.starrocks.thrift.TStatusCode;
 import com.starrocks.thrift.TTableInfo;
 import com.starrocks.transaction.GlobalTransactionMgr;
+import com.starrocks.warehouse.Warehouse;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -288,6 +290,8 @@ public class ShowExecutor {
             handleHelp();
         } else if (stmt instanceof ShowWarehousesStmt) {
             handleShowWarehouses();
+        } else if (stmt instanceof ShowNodesStmt) {
+            handleShowNodesStatement();
         } else if (stmt instanceof ShowDbStmt) {
             handleShowDb();
         } else if (stmt instanceof ShowTableStmt) {
@@ -2696,13 +2700,68 @@ public class ShowExecutor {
     }
 
     // show warehouse statement
-    private void handleShowWarehouses() {
-        ShowWarehousesStmt showStmt = (ShowWarehousesStmt) stmt;
+    public void handleShowWarehouses() throws AnalysisException {
+        ShowWarehousesStmt statement = (ShowWarehousesStmt) stmt;
         GlobalStateMgr globalStateMgr = GlobalStateMgr.getCurrentState();
         WarehouseManager warehouseMgr = globalStateMgr.getWarehouseMgr();
-        List<List<String>> rowSet = warehouseMgr.getWarehousesInfo().stream()
-                .sorted(Comparator.comparing(o -> o.get(0))).collect(Collectors.toList());
-        resultSet = new ShowResultSet(showStmt.getMetaData(), rowSet);
+        if (RunMode.getCurrentRunMode() == RunMode.SHARED_NOTHING) {
+            ErrorReport.reportAnalysisException(ErrorCode.ERR_NOT_SUPPORTED_STATEMENT_IN_SHARED_NOTHING_MODE);
+        }
+        PatternMatcher matcher = null;
+        if (!statement.getPattern().isEmpty()) {
+            matcher = PatternMatcher.createMysqlPattern(statement.getPattern(),
+                    CaseSensibility.WAREHOUSE.getCaseSensibility());
+        }
+        PatternMatcher finalMatcher = matcher;
+        List<List<String>> rowSet = warehouseMgr.getAllWarehouses().stream()
+                .filter(warehouse -> finalMatcher == null || finalMatcher.match(warehouse.getName()))
+                .filter(warehouse -> {
+                    try {
+                        Authorizer.checkAnyActionOnWarehouse(connectContext.getCurrentUserIdentity(),
+                                connectContext.getCurrentRoleIds(), warehouse.getName());
+                    } catch (AccessDeniedException e) {
+                        return false;
+                    }
+                    return true;
+                }).sorted(Comparator.comparing(Warehouse::getId)).map(Warehouse::getWarehourseInfo)
+                .collect(Collectors.toList());
+        resultSet = new ShowResultSet(statement.getMetaData(), rowSet);
+    }
+
+    public void handleShowNodesStatement() {
+        ShowNodesStmt statement = (ShowNodesStmt) stmt;
+        List<List<String>> rows = Lists.newArrayList();
+        WarehouseManager warehouseMgr = GlobalStateMgr.getCurrentState().getWarehouseMgr();
+        // filter by pattern or warehouseName
+        String warehouseName = null;
+        PatternMatcher matcher = null;
+        if (statement.getWarehouseName() != null) {
+            warehouseName = statement.getWarehouseName();
+        } else if (statement.getPattern() != null) {
+            matcher = PatternMatcher.createMysqlPattern(statement.getPattern(),
+                    CaseSensibility.WAREHOUSE.getCaseSensibility());
+        }
+        List<Warehouse> warehouseList = warehouseMgr.getAllWarehouses().stream().filter(
+                warehouse -> {
+                    try {
+                        Authorizer.checkAnyActionOnWarehouse(connectContext.getCurrentUserIdentity(),
+                                connectContext.getCurrentRoleIds(), warehouse.getName());
+                    } catch (AccessDeniedException e) {
+                        return false;
+                    }
+                    return true;
+                }
+        ).collect(Collectors.toList());
+        for (Warehouse wh : warehouseList) {
+            if (warehouseName != null && !wh.getName().equalsIgnoreCase(warehouseName)) {
+                continue;
+            }
+            if (matcher != null && !matcher.match(wh.getName())) {
+                continue;
+            }
+            rows.addAll(wh.getNodesInfo());
+        }
+        resultSet = new ShowResultSet(statement.getMetaData(), rows);
     }
 
     private List<List<String>> doPredicate(ShowStmt showStmt,

@@ -49,6 +49,7 @@ public abstract class Warehouse implements Writable {
     private volatile long updatedTime;
     protected final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
+
     public enum WarehouseState {
         AVAILABLE,
         SUSPENDED,
@@ -86,6 +87,22 @@ public abstract class Warehouse implements Writable {
         this.exist = exist;
     }
 
+    protected String getComment() {
+        return this.comment;
+    }
+
+    public long getCreatedTime() {
+        return this.createdTime;
+    }
+
+    public long getResumedTime() {
+        return this.resumedTime;
+    }
+
+    public long getUpdatedTime() {
+        return this.updatedTime;
+    }
+
     public abstract void getProcNodeData(BaseProcResult result);
 
     public abstract Map<Long, Cluster> getClusters() throws DdlException;
@@ -96,7 +113,9 @@ public abstract class Warehouse implements Writable {
 
     public abstract ProcResult getClusterProcData();
 
-    public abstract List<String> getWarehouseInfo();
+    public abstract List<List<String>> getNodesInfo();
+
+    public abstract List<String> getWarehourseInfo();
 
     public abstract void initCluster() throws DdlException;
 

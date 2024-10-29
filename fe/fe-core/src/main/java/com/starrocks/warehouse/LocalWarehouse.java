@@ -21,6 +21,7 @@ import com.google.gson.annotations.SerializedName;
 import com.starrocks.common.DdlException;
 import com.starrocks.common.proc.BaseProcResult;
 import com.starrocks.common.proc.ProcResult;
+import com.starrocks.common.util.TimeUtils;
 import com.starrocks.lake.StarOSAgent;
 import com.starrocks.server.GlobalStateMgr;
 import com.starrocks.sql.analyzer.SemanticException;
@@ -55,10 +56,24 @@ public class LocalWarehouse extends Warehouse {
 
     @Override
     public void getProcNodeData(BaseProcResult result) {
-        result.addRow(Lists.newArrayList(String.valueOf(this.getId()),
+        result.addRow(getWarehourseInfo());
+    }
+
+    @Override
+    public List<String> getWarehourseInfo() {
+        return Lists.newArrayList(String.valueOf(this.getId()),
                 this.getName(),
                 this.getState().toString(),
-                String.valueOf(1L)));
+                String.valueOf(cluster.getAllComputeNodes().size()),
+                String.valueOf(1L),
+                String.valueOf(1L),
+                String.valueOf(1L),
+                String.valueOf(0L),
+                String.valueOf(0L),
+                TimeUtils.longToTimeString(this.getCreatedTime()),
+                TimeUtils.longToTimeString(this.getResumedTime()),
+                TimeUtils.longToTimeString(this.getUpdatedTime()),
+                this.getComment());
     }
 
     @Override
@@ -85,8 +100,10 @@ public class LocalWarehouse extends Warehouse {
     }
 
     @Override
-    public List<String> getWarehouseInfo() {
-        return Lists.newArrayList();
+    public List<List<String>> getNodesInfo() {
+        BaseProcResult result = new BaseProcResult();
+        cluster.getProcNodesDataV2(result, getId());
+        return result.getRows();
     }
 
     @Override
