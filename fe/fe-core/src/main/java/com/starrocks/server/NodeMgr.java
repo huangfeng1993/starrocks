@@ -69,6 +69,7 @@ import com.starrocks.sql.ast.AdminSetConfigStmt;
 import com.starrocks.sql.ast.ModifyFrontendAddressClause;
 import com.starrocks.staros.StarMgrServer;
 import com.starrocks.system.Frontend;
+import com.starrocks.system.MultiWarehouseSystemService;
 import com.starrocks.system.SystemInfoService;
 import com.starrocks.thrift.TNetworkAddress;
 import com.starrocks.thrift.TSetConfigRequest;
@@ -155,7 +156,7 @@ public class NodeMgr {
         this.leaderRpcPort = 0;
         this.leaderHttpPort = 0;
         this.leaderIp = "";
-        this.systemInfo = new SystemInfoService();
+        this.systemInfo = new MultiWarehouseSystemService();
 
         this.brokerMgr = new BrokerMgr();
     }
@@ -214,7 +215,7 @@ public class NodeMgr {
     public SystemInfoService getOrCreateSystemInfo(Integer clusterId) {
         SystemInfoService systemInfoService = systemInfoMap.get(clusterId);
         if (systemInfoService == null) {
-            systemInfoService = new SystemInfoService();
+            systemInfoService = new MultiWarehouseSystemService();
             systemInfoMap.put(clusterId, systemInfoService);
         }
         return systemInfoService;
@@ -1288,7 +1289,7 @@ public class NodeMgr {
             }
         }
 
-        systemInfo = nodeMgr.systemInfo;
+        systemInfo = new MultiWarehouseSystemService(nodeMgr.systemInfo);
         systemInfoMap.put(clusterId, systemInfo);
         brokerMgr = nodeMgr.brokerMgr;
     }

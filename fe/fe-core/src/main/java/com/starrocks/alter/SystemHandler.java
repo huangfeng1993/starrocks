@@ -198,10 +198,12 @@ public class SystemHandler extends AlterHandler {
             GlobalStateMgr.getCurrentState().getLoadInstance().setLoadErrorHubInfo(clause.getProperties());
         } else if (alterClause instanceof AddComputeNodeClause) {
             AddComputeNodeClause addComputeNodeClause = (AddComputeNodeClause) alterClause;
-            GlobalStateMgr.getCurrentSystemInfo().addComputeNodes(addComputeNodeClause.getHostPortPairs());
+            GlobalStateMgr.getCurrentSystemInfo()
+                    .addComputeNodes(addComputeNodeClause.getHostPortPairs(), addComputeNodeClause.getWarehouse());
         } else if (alterClause instanceof DropComputeNodeClause) {
             DropComputeNodeClause dropComputeNodeClause = (DropComputeNodeClause) alterClause;
-            GlobalStateMgr.getCurrentSystemInfo().dropComputeNodes(dropComputeNodeClause.getHostPortPairs());
+            GlobalStateMgr.getCurrentSystemInfo()
+                    .dropComputeNodes(dropComputeNodeClause.getHostPortPairs(), dropComputeNodeClause.getWarehouse());
         } else if (alterClause instanceof CreateImageClause) {
             GlobalStateMgr.getCurrentState().triggerNewImage();
         } else if (alterClause instanceof CleanTabletSchedQClause) {

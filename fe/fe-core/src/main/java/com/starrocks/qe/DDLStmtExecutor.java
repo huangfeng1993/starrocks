@@ -30,6 +30,7 @@ import com.starrocks.load.EtlJobType;
 import com.starrocks.scheduler.Constants;
 import com.starrocks.scheduler.Task;
 import com.starrocks.scheduler.TaskManager;
+import com.starrocks.server.WarehouseManager;
 import com.starrocks.sql.analyzer.SemanticException;
 import com.starrocks.sql.ast.AdminCancelRepairTableStmt;
 import com.starrocks.sql.ast.AdminCheckTabletsStmt;
@@ -119,6 +120,10 @@ import com.starrocks.sql.ast.UninstallPluginStmt;
 import com.starrocks.sql.ast.pipe.AlterPipeStmt;
 import com.starrocks.sql.ast.pipe.CreatePipeStmt;
 import com.starrocks.sql.ast.pipe.DropPipeStmt;
+import com.starrocks.sql.ast.warehouse.CreateWarehouseStmt;
+import com.starrocks.sql.ast.warehouse.DropWarehouseStmt;
+import com.starrocks.sql.ast.warehouse.ResumeWarehouseStmt;
+import com.starrocks.sql.ast.warehouse.SuspendWarehouseStmt;
 import com.starrocks.statistic.AnalyzeJob;
 import com.starrocks.statistic.ExternalAnalyzeJob;
 import com.starrocks.statistic.NativeAnalyzeJob;
@@ -948,6 +953,43 @@ public class DDLStmtExecutor {
             ErrorReport.wrapWithRuntimeException(() ->
                     context.getGlobalStateMgr().getStorageVolumeMgr().setDefaultStorageVolume(stmt)
             );
+            return null;
+        }
+
+        //=========================================== Warehouse Statement ==================================================
+        @Override
+        public ShowResultSet visitCreateWarehouseStatement(CreateWarehouseStmt stmt, ConnectContext context) {
+            ErrorReport.wrapWithRuntimeException(() -> {
+                WarehouseManager warehouseMgr = context.getGlobalStateMgr().getWarehouseMgr();
+                warehouseMgr.createWarehouse(stmt);
+            });
+            return null;
+        }
+
+        @Override
+        public ShowResultSet visitSuspendWarehouseStatement(SuspendWarehouseStmt stmt, ConnectContext context) {
+            ErrorReport.wrapWithRuntimeException(() -> {
+                WarehouseManager warehouseMgr = context.getGlobalStateMgr().getWarehouseMgr();
+                warehouseMgr.suspend(stmt.getWarehouseName());
+            });
+            return null;
+        }
+
+        @Override
+        public ShowResultSet visitResumeWarehouseStatement(ResumeWarehouseStmt stmt, ConnectContext context) {
+            ErrorReport.wrapWithRuntimeException(() -> {
+                WarehouseManager warehouseMgr = context.getGlobalStateMgr().getWarehouseMgr();
+                warehouseMgr.resume(stmt.getWarehouseName());
+            });
+            return null;
+        }
+
+        @Override
+        public ShowResultSet visitDropWarehouseStatement(DropWarehouseStmt stmt, ConnectContext context) {
+            ErrorReport.wrapWithRuntimeException(() -> {
+                WarehouseManager warehouseMgr = context.getGlobalStateMgr().getWarehouseMgr();
+                warehouseMgr.dropWarehouse(stmt);
+            });
             return null;
         }
 

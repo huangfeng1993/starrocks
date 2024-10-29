@@ -15,11 +15,17 @@
 package com.starrocks.warehouse;
 
 import com.google.gson.annotations.SerializedName;
+import com.starrocks.common.io.Text;
+import com.starrocks.common.io.Writable;
+import com.starrocks.persist.gson.GsonUtils;
 import com.starrocks.thrift.TWarehouseInfo;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Objects;
 
-public class WarehouseInfo {
+public class WarehouseInfo implements Writable {
     public static final long ABSENT_ID = -1L;
 
     @SerializedName(value = "warehouse")
@@ -175,4 +181,16 @@ public class WarehouseInfo {
                 ", lastFinishedJobTimestampMs=" + lastFinishedJobTimestampMs +
                 '}';
     }
+
+    public static WarehouseInfo read(DataInput in) throws IOException {
+        String json = Text.readString(in);
+        return GsonUtils.GSON.fromJson(json, WarehouseInfo.class);
+    }
+
+    @Override
+    public void write(DataOutput out) throws IOException {
+        String json = GsonUtils.GSON.toJson(this);
+        Text.writeString(out, json);
+    }
 }
+

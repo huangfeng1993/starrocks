@@ -98,14 +98,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class SystemInfoService implements GsonPostProcessable {
-    private static final Logger LOG = LogManager.getLogger(SystemInfoService.class);
+    protected static final Logger LOG = LogManager.getLogger(SystemInfoService.class);
     public static final String DEFAULT_CLUSTER = "default_cluster";
 
     @SerializedName(value = "be")
-    private volatile ConcurrentHashMap<Long, Backend> idToBackendRef;
+    protected volatile ConcurrentHashMap<Long, Backend> idToBackendRef;
 
     @SerializedName(value = "ce")
-    private volatile ConcurrentHashMap<Long, ComputeNode> idToComputeNodeRef;
+    protected volatile ConcurrentHashMap<Long, ComputeNode> idToComputeNodeRef;
 
     private volatile ImmutableMap<Long, AtomicLong> idToReportVersionRef;
     private volatile ImmutableMap<Long, DiskInfo> pathHashToDishInfoRef;
@@ -172,7 +172,7 @@ public class SystemInfoService implements GsonPostProcessable {
         LOG.info("finished to add {} ", newComputeNode);
     }
 
-    private void setComputeNodeOwner(ComputeNode computeNode) {
+    protected void setComputeNodeOwner(ComputeNode computeNode) {
         computeNode.setBackendState(BackendState.using);
     }
 
@@ -193,7 +193,7 @@ public class SystemInfoService implements GsonPostProcessable {
         }
     }
 
-    private void checkSameNodeExist(String host, int heartPort) throws DdlException {
+    protected void checkSameNodeExist(String host, int heartPort) throws DdlException {
         // check is already exist
         if (getBackendWithHeartbeatPort(host, heartPort) != null) {
             throw new DdlException("Backend already exists with same host " + host + " and port " + heartPort);
@@ -1262,5 +1262,19 @@ public class SystemInfoService implements GsonPostProcessable {
             }
         }
     }
+
+
+    public void addComputeNodes(List<Pair<String, Integer>> hostPortPairs, String warehouseName) throws DdlException {
+        throw new DdlException("not implemented");
+    }
+
+    public void dropComputeNodes(List<Pair<String, Integer>> hostPortPairs, String warehouseName) throws DdlException {
+        throw new DdlException("not implemented");
+    }
+
+    public void dropNodes(long warehouseId) throws DdlException {
+        throw new DdlException("not implemented");
+    }
+
 }
 

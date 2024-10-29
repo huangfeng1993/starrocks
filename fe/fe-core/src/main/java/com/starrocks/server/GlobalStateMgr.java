@@ -1648,6 +1648,7 @@ public class GlobalStateMgr {
                         .put(SRMetaBlockID.GLOBAL_FUNCTION_MGR, globalFunctionMgr::load)
                         .put(SRMetaBlockID.STORAGE_VOLUME_MGR, storageVolumeMgr::load)
                         .put(SRMetaBlockID.REPLICATION_MGR, replicationMgr::load)
+                        .put(SRMetaBlockID.WAREHOUSE_MGR, warehouseMgr::load)
                         .put(SRMetaBlockID.PIPE_MGR, pipeManager.getRepo()::load)
                         .build();
 
@@ -2044,6 +2045,7 @@ public class GlobalStateMgr {
                     globalFunctionMgr.save(dos);
                     storageVolumeMgr.save(dos);
                     replicationMgr.save(dos);
+                    warehouseMgr.save(dos);
                     pipeManager.getRepo().save(dos);
                 } catch (SRMetaBlockException e) {
                     LOG.error("Save meta block failed ", e);

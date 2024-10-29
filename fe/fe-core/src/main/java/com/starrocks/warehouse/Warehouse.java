@@ -25,7 +25,10 @@ import com.starrocks.persist.gson.GsonUtils;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public abstract class Warehouse implements Writable {
 
@@ -33,22 +36,34 @@ public abstract class Warehouse implements Writable {
     protected String name;
     @SerializedName(value = "id")
     private long id;
+    @SerializedName(value = "state")
+    protected WarehouseState state = WarehouseState.AVAILABLE;
+
+    @SerializedName(value = "comment")
+    private String comment;
+    @SerializedName(value = "ctime")
+    private volatile long createdTime;
+    @SerializedName(value = "rtime")
+    private volatile long resumedTime;
+    @SerializedName(value = "mtime")
+    private volatile long updatedTime;
+    protected final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
     public enum WarehouseState {
-        INITIALIZING,
-        RUNNING,
+        AVAILABLE,
         SUSPENDED,
-        SCALING
     }
 
-    @SerializedName(value = "state")
-    protected WarehouseState state = WarehouseState.INITIALIZING;
 
     private volatile boolean exist = true;
 
-    public Warehouse(long id, String name) {
+    public Warehouse(long id, String name, String comment) {
         this.id = id;
         this.name = name;
+        this.comment = comment;
+        this.createdTime = System.currentTimeMillis();
+        this.resumedTime = -1L;
+        this.updatedTime = this.createdTime;
     }
 
     public long getId() {
@@ -80,6 +95,25 @@ public abstract class Warehouse implements Writable {
     public abstract void setClusters(Map<Long, Cluster> clusters) throws DdlException;
 
     public abstract ProcResult getClusterProcData();
+
+    public abstract List<String> getWarehouseInfo();
+
+    public abstract void initCluster() throws DdlException;
+
+    public abstract void dropSelf() throws DdlException;
+
+    public abstract void suspendSelf();
+
+    public abstract void resumeSelf();
+
+
+    public void setResumedTime(long time) {
+        this.resumedTime = time;
+    }
+
+    public void setUpdatedTime(long time) {
+        this.updatedTime = time;
+    }
 
     @Override
     public void write(DataOutput out) throws IOException {

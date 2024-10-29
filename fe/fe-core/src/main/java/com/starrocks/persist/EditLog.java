@@ -94,6 +94,7 @@ import com.starrocks.scheduler.persist.TaskRunStatus;
 import com.starrocks.scheduler.persist.TaskRunStatusChange;
 import com.starrocks.server.GlobalStateMgr;
 import com.starrocks.server.LocalMetastore;
+import com.starrocks.server.WarehouseManager;
 import com.starrocks.sql.ast.UserIdentity;
 import com.starrocks.staros.StarMgrJournal;
 import com.starrocks.staros.StarMgrServer;
@@ -114,6 +115,7 @@ import com.starrocks.system.Frontend;
 import com.starrocks.thrift.TNetworkAddress;
 import com.starrocks.transaction.TransactionState;
 import com.starrocks.transaction.TransactionStateBatch;
+import com.starrocks.warehouse.Warehouse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -1221,6 +1223,24 @@ public class EditLog {
                     globalStateMgr.getClusterInfo().replayCancelDisableDisks(info);
                     break;
                 }
+                case OperationType.OP_CREATE_WAREHOUSE: {
+                    Warehouse wh = (Warehouse) journal.getData();
+                    WarehouseManager warehouseMgr = globalStateMgr.getWarehouseMgr();
+                    warehouseMgr.replayCreateWarehouse(wh);
+                    break;
+                }
+                case OperationType.OP_DROP_WAREHOUSE: {
+                    DropWarehouseLog log = (DropWarehouseLog) journal.getData();
+                    WarehouseManager warehouseMgr = globalStateMgr.getWarehouseMgr();
+                    warehouseMgr.replayDropWarehouse(log);
+                    break;
+                }
+                case OperationType.OP_ALTER_WAREHOUSE: {
+                    Warehouse wh = (Warehouse) journal.getData();
+                    WarehouseManager warehouseMgr = globalStateMgr.getWarehouseMgr();
+                    warehouseMgr.replayAlterWarehouse(wh);
+                    break;
+                }
                 default: {
                     if (Config.ignore_unknown_log_id) {
                         LOG.warn("UNKNOWN Operation Type {}", opCode);
@@ -2288,6 +2308,18 @@ public class EditLog {
         logEdit(OperationType.OP_RECOVER_PARTITION_VERSION, info);
     }
 
+    public void logCreateWarehouse(Warehouse warehouse) {
+        logEdit(OperationType.OP_CREATE_WAREHOUSE, warehouse);
+    }
+
+    public void logDropWarehouse(String warehouse) {
+        logEdit(OperationType.OP_DROP_WAREHOUSE, new DropWarehouseLog(warehouse));
+    }
+
+    public void logAlterWarehouse(Warehouse warehouse) {
+        logEdit(OperationType.OP_ALTER_WAREHOUSE, warehouse);
+    }
+
     public void logDecommissionDisk(DecommissionDiskInfo info) {
         logEdit(OperationType.OP_DECOMMISSION_DISK, info);
     }
@@ -2303,4 +2335,5 @@ public class EditLog {
     public void logCancelDisableDisk(CancelDisableDiskInfo info) {
         logEdit(OperationType.OP_CANCEL_DISABLE_DISK, info);
     }
+
 }

@@ -1726,6 +1726,9 @@ public class SessionVariable implements Serializable, Writable, Cloneable {
     @VarAttr(name = ENABLE_PARTITION_COLUMN_VALUE_ONLY_OPTIMIZATION, flag = VariableMgr.INVISIBLE)
     private boolean enablePartitionColumnValueOnlyOptimization = true;
 
+    @VariableMgr.VarAttr(name = "warehouse")
+    private String warehouseName = "default_warehouse";
+
     // This variable is introduced to solve compatibility issues/
     // see more details: https://github.com/StarRocks/starrocks/pull/29678
     @VarAttr(name = ENABLE_COLLECT_TABLE_LEVEL_SCAN_STATS)
@@ -2245,6 +2248,13 @@ public class SessionVariable implements Serializable, Writable, Cloneable {
         this.consistentHashVirtualNodeNum = consistentHashVirtualNodeNum;
     }
 
+    public String getWarehouseName() {
+        return this.warehouseName;
+    }
+
+    public void setWarehouseName(String warehouseName) {
+        this.warehouseName = warehouseName;
+    }
     // when pipeline engine is enabled
     // in case of pipeline_dop > 0: return pipeline_dop * parallelExecInstanceNum;
     // in case of pipeline_dop <= 0 and avgNumCores < 2: return 1;

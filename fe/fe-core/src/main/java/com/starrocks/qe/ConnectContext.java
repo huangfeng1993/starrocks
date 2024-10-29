@@ -67,6 +67,7 @@ import com.starrocks.sql.parser.SqlParser;
 import com.starrocks.thrift.TPipelineProfileLevel;
 import com.starrocks.thrift.TUniqueId;
 import com.starrocks.thrift.TWorkGroup;
+import com.starrocks.warehouse.Warehouse;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -688,14 +689,23 @@ public class ConnectContext {
     }
 
     public String getCurrentWarehouse() {
-        if (currentWarehouse != null) {
-            return currentWarehouse;
-        }
-        return WarehouseManager.DEFAULT_WAREHOUSE_NAME;
+        return this.sessionVariable.getWarehouseName();
     }
 
     public void setCurrentWarehouse(String currentWarehouse) {
-        this.currentWarehouse = currentWarehouse;
+        this.sessionVariable.setWarehouseName(currentWarehouse);
+    }
+
+    public long getCurrentWarehouseId() {
+        String warehouseName = this.sessionVariable.getWarehouseName();
+        if (warehouseName.equalsIgnoreCase(WarehouseManager.DEFAULT_WAREHOUSE_NAME)) {
+            return 0L;
+        }
+        Warehouse warehouse = this.globalStateMgr.getWarehouseMgr().getWarehouse(warehouseName);
+        if (warehouse == null) {
+            throw new SemanticException("Warehouse " + warehouseName + " not exist");
+        }
+        return warehouse.getId();
     }
 
     public void setCurrentWarehouseId(long id) {
@@ -912,6 +922,7 @@ public class ConnectContext {
         return ScopeGuard.setIfNotExists(this);
     }
 
+
     /**
      * Set thread-local context for the scope, and remove it after leaving the scope
      */
@@ -981,7 +992,7 @@ public class ConnectContext {
                 row.add(Boolean.toString(isPending));
             }
 
-            row.add(currentWarehouse);
+            row.add(ConnectContext.this.sessionVariable.getWarehouseName());
             return row;
         }
     }

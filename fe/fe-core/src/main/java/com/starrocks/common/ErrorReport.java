@@ -99,6 +99,10 @@ public class ErrorReport {
         throw new ValidateException(errorCode.formatErrorMsg(objs), errorType);
     }
 
+    public static void reportWarehouseUnavailableException(ErrorCode errorCode, Object... objs) throws UserException {
+        throw new UserException(ErrorReport.reportCommon(null, errorCode, objs));
+    }
+
     public interface DdlExecutor {
         void apply() throws UserException;
     }

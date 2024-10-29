@@ -103,6 +103,12 @@ public class ComputeNode implements IComputable, Writable {
     @SerializedName("lastWriteFail")
     private volatile boolean lastWriteFail = false;
 
+    @SerializedName(value = "workerGroupId")
+    private long workerGroupId = 0L;
+
+    @SerializedName(value = "warehouseId")
+    private long warehouseId = 0L;
+
     // Indicate there is whether storage_path or not with CN node
     // It must be true for Backend
     @SerializedName("isSetStoragePath")
@@ -612,6 +618,22 @@ public class ComputeNode implements IComputable, Writable {
         ResourceGroupUsage usage = currGroupIdToUsage.get(groupId);
         return usage.group.isMaxCpuCoresEffective() && usage.isCpuCoreUsagePermilleEffective() &&
                 usage.cpuCoreUsagePermille >= usage.group.getMaxCpuCores() * 1000;
+    }
+
+    public long getWorkerGroupId() {
+        return workerGroupId;
+    }
+
+    public void setWorkerGroupId(long workerGroupId) {
+        this.workerGroupId = workerGroupId;
+    }
+
+    public void setWarehouseId(long warehouseId) {
+        this.warehouseId = warehouseId;
+    }
+
+    public long getWarehouseId() {
+        return this.warehouseId;
     }
 
     public static class ResourceGroupUsage {

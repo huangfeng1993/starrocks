@@ -21,8 +21,11 @@ import com.google.gson.annotations.SerializedName;
 import com.starrocks.common.DdlException;
 import com.starrocks.common.proc.BaseProcResult;
 import com.starrocks.common.proc.ProcResult;
+import com.starrocks.lake.StarOSAgent;
+import com.starrocks.server.GlobalStateMgr;
 import com.starrocks.sql.analyzer.SemanticException;
 
+import java.util.List;
 import java.util.Map;
 
 // on-premise
@@ -41,8 +44,13 @@ public class LocalWarehouse extends Warehouse {
             .build();
 
     public LocalWarehouse(long id, String name) {
-        super(id, name);
+        super(id, name, "");
         cluster = new Cluster(DEFAULT_CLUSTER_ID);
+    }
+
+    public LocalWarehouse(long id, String name, long clusterId, String comment) {
+        super(id, name, comment);
+        cluster = new Cluster(clusterId);
     }
 
     @Override
@@ -74,5 +82,46 @@ public class LocalWarehouse extends Warehouse {
         result.setNames(CLUSTER_PROC_NODE_TITLE_NAMES);
         cluster.getProcNodeData(result);
         return result;
+    }
+
+    @Override
+    public List<String> getWarehouseInfo() {
+        return Lists.newArrayList();
+    }
+
+    @Override
+    public void initCluster() throws DdlException {
+        cluster.init();
+    }
+
+    @Override
+    public void dropSelf() throws DdlException {
+        this.deleteWorkerFromStarMgr();
+        this.dropNodeFromSystem();
+    }
+
+    @Override
+    public void suspendSelf() {
+        this.state = Warehouse.WarehouseState.SUSPENDED;
+        long currentTime = System.currentTimeMillis();
+        this.setResumedTime(currentTime);
+        this.setUpdatedTime(currentTime);
+    }
+
+    @Override
+    public void resumeSelf() {
+        this.state = Warehouse.WarehouseState.AVAILABLE;
+        long currentTime = System.currentTimeMillis();
+        this.setUpdatedTime(currentTime);
+    }
+
+    private void deleteWorkerFromStarMgr() throws DdlException {
+        long workerGroupId = this.cluster.getWorkerGroupId();
+        StarOSAgent starOSAgent = GlobalStateMgr.getCurrentStarOSAgent();
+        starOSAgent.deleteWorkerGroup(workerGroupId);
+    }
+
+    private void dropNodeFromSystem() throws DdlException {
+        GlobalStateMgr.getCurrentSystemInfo().dropNodes(this.getId());
     }
 }
