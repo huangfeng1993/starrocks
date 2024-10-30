@@ -73,8 +73,12 @@ public class CoordinatorTest extends PlanTestBase {
         ctx.setExecutionId(new TUniqueId(0xdeadbeef, 0xdeadbeef));
         ConnectContext.threadLocalInfo.set(ctx);
 
-        coordinator = new DefaultCoordinator.Factory().createQueryScheduler(ctx, Lists.newArrayList(), Lists.newArrayList(),
-                new TDescriptorTable());
+        try {
+            coordinator = new DefaultCoordinator.Factory().createQueryScheduler(ctx, Lists.newArrayList(),
+                    Lists.newArrayList(), new TDescriptorTable());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         coordinatorPreprocessor = coordinator.getPrepareInfo();
     }
 
@@ -160,12 +164,11 @@ public class CoordinatorTest extends PlanTestBase {
         binlogScan.finalizeStats(null);
 
         List<ScanNode> scanNodes = Arrays.asList(binlogScan);
-        CoordinatorPreprocessor prepare = new CoordinatorPreprocessor(Lists.newArrayList(), scanNodes,
-                StatisticUtils.buildConnectContext());
+        CoordinatorPreprocessor prepare =
+                new CoordinatorPreprocessor(Lists.newArrayList(), scanNodes, StatisticUtils.buildConnectContext());
         prepare.computeFragmentInstances();
 
-        FragmentScanRangeAssignment scanRangeMap =
-                prepare.getFragmentScanRangeAssignment(fragmentId);
+        FragmentScanRangeAssignment scanRangeMap = prepare.getFragmentScanRangeAssignment(fragmentId);
         Backend backend = GlobalStateMgr.getCurrentSystemInfo().getBackends().get(0);
         Assert.assertFalse(scanRangeMap.isEmpty());
         Long expectedWorkerId = backend.getId();
@@ -173,9 +176,8 @@ public class CoordinatorTest extends PlanTestBase {
         Map<Integer, List<TScanRangeParams>> rangesPerNode = scanRangeMap.get(expectedWorkerId);
         Assert.assertTrue(rangesPerNode.containsKey(planNodeId.asInt()));
         List<TScanRangeParams> ranges = rangesPerNode.get(planNodeId.asInt());
-        List<Long> tabletIds =
-                ranges.stream().map(x -> x.getScan_range().getBinlog_scan_range().getTablet_id())
-                        .collect(Collectors.toList());
+        List<Long> tabletIds = ranges.stream().map(x -> x.getScan_range().getBinlog_scan_range().getTablet_id())
+                .collect(Collectors.toList());
         Assert.assertEquals(olapTableTabletIds, tabletIds);
     }
 
@@ -219,8 +221,8 @@ public class CoordinatorTest extends PlanTestBase {
         fragments.add(fragment);
 
         // Build topology
-        CoordinatorPreprocessor prepare = new CoordinatorPreprocessor(fragments, scanNodes,
-                StatisticUtils.buildConnectContext());
+        CoordinatorPreprocessor prepare =
+                new CoordinatorPreprocessor(fragments, scanNodes, StatisticUtils.buildConnectContext());
         prepare.computeFragmentInstances();
 
         // Assert

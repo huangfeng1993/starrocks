@@ -89,8 +89,8 @@ public class DefaultWorkerProvider implements WorkerProvider {
         public DefaultWorkerProvider captureAvailableWorkers(SystemInfoService systemInfoService,
                                                              boolean preferComputeNode,
                                                              int numUsedComputeNodes,
-                                                             ComputationFragmentSchedulingPolicy policy) {
-
+                                                             ComputationFragmentSchedulingPolicy policy,
+                                                             long warehouseId) {
 
             ImmutableMap<Long, ComputeNode> idToComputeNode =
                     buildComputeNodeInfo(systemInfoService, numUsedComputeNodes, policy);

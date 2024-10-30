@@ -16,6 +16,7 @@ package com.starrocks.qe.scheduler;
 
 import com.starrocks.analysis.DescriptorTable;
 import com.starrocks.common.Status;
+import com.starrocks.common.UserException;
 import com.starrocks.common.util.RuntimeProfile;
 import com.starrocks.planner.PlanFragment;
 import com.starrocks.planner.ScanNode;
@@ -51,16 +52,20 @@ public abstract class Coordinator {
         Coordinator createQueryScheduler(ConnectContext context,
                                          List<PlanFragment> fragments,
                                          List<ScanNode> scanNodes,
-                                         TDescriptorTable descTable);
+                                         TDescriptorTable descTable) throws UserException;
+
+        ;
 
         Coordinator createInsertScheduler(ConnectContext context,
                                           List<PlanFragment> fragments,
                                           List<ScanNode> scanNodes,
-                                          TDescriptorTable descTable);
+                                          TDescriptorTable descTable) throws UserException;
 
-        Coordinator createBrokerLoadScheduler(LoadPlanner loadPlanner);
+        ;
 
-        Coordinator createStreamLoadScheduler(LoadPlanner loadPlanner);
+        Coordinator createBrokerLoadScheduler(LoadPlanner loadPlanner) throws UserException;
+
+        Coordinator createStreamLoadScheduler(LoadPlanner loadPlanner) throws UserException;
 
         Coordinator createSyncStreamLoadScheduler(StreamLoadPlanner planner, TNetworkAddress address);
 
@@ -68,13 +73,14 @@ public abstract class Coordinator {
                                                          List<PlanFragment> fragments,
                                                          List<ScanNode> scanNodes, String timezone, long startTime,
                                                          Map<String, String> sessionVariables,
-                                                         ConnectContext context, long execMemLimit);
+                                                         ConnectContext context, long execMemLimit)
+                throws UserException;
 
         Coordinator createBrokerExportScheduler(Long jobId, TUniqueId queryId, DescriptorTable descTable,
                                                 List<PlanFragment> fragments,
                                                 List<ScanNode> scanNodes, String timezone, long startTime,
                                                 Map<String, String> sessionVariables,
-                                                long execMemLimit);
+                                                long execMemLimit) throws UserException;
     }
 
     // ------------------------------------------------------------------------------------

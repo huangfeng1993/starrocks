@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.starrocks.common.FeConstants;
+import com.starrocks.common.UserException;
 import com.starrocks.qe.SessionVariableConstants.ComputationFragmentSchedulingPolicy;
 import com.starrocks.qe.SimpleScheduler;
 import com.starrocks.qe.scheduler.NonRecoverableException;
@@ -62,12 +63,18 @@ public class DefaultSharedDataWorkerProvider implements WorkerProvider {
 
     public static class Factory implements WorkerProvider.Factory {
         @Override
-        public DefaultSharedDataWorkerProvider captureAvailableWorkers(SystemInfoService systemInfoService,
-                                       boolean preferComputeNode,
-                                       int numUsedComputeNodes,
-                                       ComputationFragmentSchedulingPolicy computationFragmentSchedulingPolicy) {
-            ImmutableMap<Long, ComputeNode> idToComputeNode =
-                    GlobalStateMgr.getCurrentWarehouseMgr().getComputeNodesFromWarehouse();
+        public WorkerProvider captureAvailableWorkers(SystemInfoService systemInfoService,
+                                                      boolean preferComputeNode,
+                                                      int numUsedComputeNodes,
+                                                      ComputationFragmentSchedulingPolicy computationFragmentSchedulingPolicy,
+                                                      long warehouseId) throws UserException {
+            ImmutableMap<Long, ComputeNode> idToComputeNode;
+            try {
+                idToComputeNode =
+                        GlobalStateMgr.getCurrentWarehouseMgr().getComputeNodesFromAvailableWarehouse(warehouseId);
+            } catch (UserException e) {
+                throw new NonRecoverableException(e.getMessage());
+            }
             if (LOG.isDebugEnabled()) {
                 LOG.debug("idToComputeNode: {}", idToComputeNode);
             }

@@ -58,6 +58,7 @@ public abstract class ScanNode extends PlanNode {
     protected String sortColumn = null;
     protected List<ColumnAccessPath> columnAccessPaths;
     protected ScanOptimzeOption scanOptimzeOption;
+    protected long warehouseId;
 
     public ScanNode(PlanNodeId id, TupleDescriptor desc, String planNodeName) {
         super(id, desc.getId().asList(), planNodeName);

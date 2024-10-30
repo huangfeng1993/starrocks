@@ -112,14 +112,20 @@ public class LakeTablet extends Tablet {
 
     @Override
     public Set<Long> getBackendIds() {
+        return getBackendIds(0L);
+    }
+
+    public Set<Long> getBackendIds(long workerGroupId) {
         if (GlobalStateMgr.isCheckpointThread()) {
             // NOTE: defensive code: don't touch any backend RPC if in checkpoint thread
             return Collections.emptySet();
         }
         try {
-            Warehouse warehouse = GlobalStateMgr.getCurrentWarehouseMgr().getDefaultWarehouse();
-            long workerGroupId = warehouse.getAnyAvailableCluster().getWorkerGroupId();
-            return GlobalStateMgr.getCurrentStarOSAgent().getBackendIdsByShard(getShardId(), workerGroupId);
+            Set<Long> backendIdsByShard = GlobalStateMgr.getCurrentStarOSAgent()
+                    .getBackendIdsByShard(this.getShardId(), workerGroupId);
+            LOG.debug("backendIdsByShard,shardId:{},backendIds:{},workerGroupId:{}",
+                    this.getShardId(), backendIdsByShard.toArray(), workerGroupId);
+            return backendIdsByShard;
         } catch (UserException e) {
             LOG.warn("Failed to get backends by shard. tablet id: {}", getId(), e);
             return Sets.newHashSet();
@@ -144,6 +150,20 @@ public class LakeTablet extends Tablet {
             if (localBeId != -1 && backendId == localBeId) {
                 localReplicas.add(replica);
             }
+        }
+    }
+
+    @Override
+    public void getQueryableReplicas(List<Replica> allQuerableReplicas, List<Replica> localReplicas,
+                                     long visibleVersion, long localBeId, int schemaHash, long workerGroupId) {
+        for (long backendId : this.getBackendIds(workerGroupId)) {
+            Replica replica = new Replica(this.getId(), backendId, visibleVersion, schemaHash, this.getDataSize(true),
+                    this.getRowCount(visibleVersion), Replica.ReplicaState.NORMAL, -1L, visibleVersion);
+            allQuerableReplicas.add(replica);
+            if (localBeId == -1L || backendId != localBeId) {
+                continue;
+            }
+            localReplicas.add(replica);
         }
     }
 

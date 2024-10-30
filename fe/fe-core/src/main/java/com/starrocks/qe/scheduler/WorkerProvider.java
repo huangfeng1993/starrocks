@@ -14,6 +14,7 @@
 
 package com.starrocks.qe.scheduler;
 
+import com.starrocks.common.UserException;
 import com.starrocks.qe.SessionVariableConstants.ComputationFragmentSchedulingPolicy;
 import com.starrocks.system.ComputeNode;
 import com.starrocks.system.SystemInfoService;
@@ -42,7 +43,8 @@ public interface WorkerProvider {
         WorkerProvider captureAvailableWorkers(SystemInfoService systemInfoService,
                                                boolean preferComputeNode,
                                                int numUsedComputeNodes,
-                                               ComputationFragmentSchedulingPolicy computationFragmentSchedulingPolicy);
+                                               ComputationFragmentSchedulingPolicy computationFragmentSchedulingPolicy,
+                                               long warehouseId) throws UserException;
     }
 
     /**

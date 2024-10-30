@@ -68,6 +68,8 @@ public class JobSpec {
 
     private boolean needReport;
 
+    private long warehouseId = 0L;
+
     /**
      * Why we use query global?
      * When `NOW()` function is in sql, we need only one now(),
@@ -83,6 +85,7 @@ public class JobSpec {
     private boolean enableQueue = false;
     private boolean needQueued = false;
     private boolean enableGroupLevelQueue = false;
+
 
     public static class Factory {
         private Factory() {
@@ -115,6 +118,7 @@ public class JobSpec {
                     .queryGlobals(queryGlobals)
                     .queryOptions(queryOptions)
                     .commonProperties(context)
+                    .warehouseId(context.getCurrentWarehouseId())
                     .setPlanProtocol(context.getSessionVariable().getThriftPlanProtocol())
                     .build();
         }
@@ -142,6 +146,7 @@ public class JobSpec {
                     .needReport(true)
                     .queryGlobals(queryGlobals)
                     .queryOptions(queryOptions)
+                    .warehouseId(context.getCurrentWarehouseId())
                     .commonProperties(context)
                     .build();
         }
@@ -168,6 +173,7 @@ public class JobSpec {
                     .needReport(true)
                     .queryGlobals(queryGlobals)
                     .queryOptions(queryOptions)
+                    .warehouseId(context.getCurrentWarehouseId())
                     .commonProperties(context)
                     .build();
         }
@@ -203,6 +209,7 @@ public class JobSpec {
                     .needReport(true)
                     .queryGlobals(queryGlobals)
                     .queryOptions(queryOptions)
+                    .warehouseId(context.getCurrentWarehouseId())
                     .commonProperties(context)
                     .build();
         }
@@ -242,6 +249,7 @@ public class JobSpec {
                     .needReport(true)
                     .queryGlobals(queryGlobals)
                     .queryOptions(queryOptions)
+                    .warehouseId(context.getCurrentWarehouseId())
                     .commonProperties(context)
                     .build();
         }
@@ -383,6 +391,10 @@ public class JobSpec {
         return descTable;
     }
 
+    public long getWarehouseId() {
+        return warehouseId;
+    }
+
     public boolean isEnablePipeline() {
         return enablePipeline;
     }
@@ -484,6 +496,11 @@ public class JobSpec {
 
         public Builder queryId(TUniqueId queryId) {
             instance.queryId = Preconditions.checkNotNull(queryId);
+            return this;
+        }
+
+        private Builder warehouseId(long warehouseId) {
+            instance.warehouseId = warehouseId;
             return this;
         }
 

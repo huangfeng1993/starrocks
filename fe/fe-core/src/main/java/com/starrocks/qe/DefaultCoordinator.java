@@ -158,7 +158,7 @@ public class DefaultCoordinator extends Coordinator {
         @Override
         public DefaultCoordinator createQueryScheduler(ConnectContext context, List<PlanFragment> fragments,
                                                        List<ScanNode> scanNodes,
-                                                       TDescriptorTable descTable) {
+                                                       TDescriptorTable descTable) throws UserException {
             JobSpec jobSpec =
                     JobSpec.Factory.fromQuerySpec(context, fragments, scanNodes, descTable, TQueryType.SELECT);
             return new DefaultCoordinator(context, jobSpec);
@@ -167,13 +167,13 @@ public class DefaultCoordinator extends Coordinator {
         @Override
         public DefaultCoordinator createInsertScheduler(ConnectContext context, List<PlanFragment> fragments,
                                                         List<ScanNode> scanNodes,
-                                                        TDescriptorTable descTable) {
+                                                        TDescriptorTable descTable) throws UserException {
             JobSpec jobSpec = JobSpec.Factory.fromQuerySpec(context, fragments, scanNodes, descTable, TQueryType.LOAD);
             return new DefaultCoordinator(context, jobSpec);
         }
 
         @Override
-        public DefaultCoordinator createBrokerLoadScheduler(LoadPlanner loadPlanner) {
+        public DefaultCoordinator createBrokerLoadScheduler(LoadPlanner loadPlanner) throws UserException {
             ConnectContext context = loadPlanner.getContext();
             JobSpec jobSpec = JobSpec.Factory.fromBrokerLoadJobSpec(loadPlanner);
 
@@ -181,7 +181,7 @@ public class DefaultCoordinator extends Coordinator {
         }
 
         @Override
-        public DefaultCoordinator createStreamLoadScheduler(LoadPlanner loadPlanner) {
+        public DefaultCoordinator createStreamLoadScheduler(LoadPlanner loadPlanner) throws UserException {
             ConnectContext context = loadPlanner.getContext();
             JobSpec jobSpec = JobSpec.Factory.fromStreamLoadJobSpec(loadPlanner);
 
@@ -199,7 +199,7 @@ public class DefaultCoordinator extends Coordinator {
                                                               List<PlanFragment> fragments, List<ScanNode> scanNodes,
                                                               String timezone,
                                                               long startTime, Map<String, String> sessionVariables,
-                                                              long execMemLimit) {
+                                                              long execMemLimit) throws UserException {
             ConnectContext context = new ConnectContext();
             context.setQualifiedUser(AuthenticationMgr.ROOT_USER);
             context.setCurrentUserIdentity(UserIdentity.ROOT);
@@ -222,7 +222,8 @@ public class DefaultCoordinator extends Coordinator {
                                                                        String timezone,
                                                                        long startTime,
                                                                        Map<String, String> sessionVariables,
-                                                                       ConnectContext context, long execMemLimit) {
+                                                                       ConnectContext context, long execMemLimit)
+                throws UserException {
             JobSpec jobSpec = JobSpec.Factory.fromNonPipelineBrokerLoadJobSpec(context, jobId, queryId, descTable,
                     fragments, scanNodes, timezone,
                     startTime, sessionVariables, execMemLimit);
@@ -253,7 +254,7 @@ public class DefaultCoordinator extends Coordinator {
         this.coordinatorPreprocessor = null;
     }
 
-    DefaultCoordinator(ConnectContext context, JobSpec jobSpec) {
+    DefaultCoordinator(ConnectContext context, JobSpec jobSpec) throws UserException {
         this.connectContext = context;
         this.jobSpec = jobSpec;
         this.returnedAllResults = false;

@@ -80,7 +80,7 @@ public class CoordinatorPreprocessor {
 
     private final FragmentAssignmentStrategyFactory fragmentAssignmentStrategyFactory;
 
-    public CoordinatorPreprocessor(ConnectContext context, JobSpec jobSpec) {
+    public CoordinatorPreprocessor(ConnectContext context, JobSpec jobSpec) throws UserException {
         workerProviderFactory = newWorkerProviderFactory();
         this.coordAddress = new TNetworkAddress(LOCAL_IP, Config.rpc_port);
 
@@ -91,14 +91,15 @@ public class CoordinatorPreprocessor {
         SessionVariable sessionVariable = connectContext.getSessionVariable();
         this.workerProvider = workerProviderFactory.captureAvailableWorkers(GlobalStateMgr.getCurrentSystemInfo(),
                 sessionVariable.isPreferComputeNode(), sessionVariable.getUseComputeNodes(),
-                sessionVariable.getComputationFragmentSchedulingPolicy());
+                sessionVariable.getComputationFragmentSchedulingPolicy(), jobSpec.getWarehouseId());
 
         this.fragmentAssignmentStrategyFactory = new FragmentAssignmentStrategyFactory(connectContext, jobSpec, executionDAG);
 
     }
 
     @VisibleForTesting
-    CoordinatorPreprocessor(List<PlanFragment> fragments, List<ScanNode> scanNodes, ConnectContext context) {
+    CoordinatorPreprocessor(List<PlanFragment> fragments, List<ScanNode> scanNodes, ConnectContext context)
+            throws UserException {
         workerProviderFactory = newWorkerProviderFactory();
         this.coordAddress = new TNetworkAddress(LOCAL_IP, Config.rpc_port);
 
@@ -109,7 +110,7 @@ public class CoordinatorPreprocessor {
         SessionVariable sessionVariable = connectContext.getSessionVariable();
         this.workerProvider = workerProviderFactory.captureAvailableWorkers(GlobalStateMgr.getCurrentSystemInfo(),
                 sessionVariable.isPreferComputeNode(), sessionVariable.getUseComputeNodes(),
-                sessionVariable.getComputationFragmentSchedulingPolicy());
+                sessionVariable.getComputationFragmentSchedulingPolicy(), connectContext.getCurrentWarehouseId());
         
         Map<PlanFragmentId, PlanFragment> fragmentMap =
                 fragments.stream().collect(Collectors.toMap(PlanFragment::getFragmentId, Function.identity()));
@@ -202,11 +203,11 @@ public class CoordinatorPreprocessor {
     /**
      * Reset state of all the fragments set in Coordinator, when retrying the same query with the fragments.
      */
-    private void resetExec() {
+    private void resetExec() throws UserException {
         SessionVariable sessionVariable = connectContext.getSessionVariable();
         workerProvider = workerProviderFactory.captureAvailableWorkers(GlobalStateMgr.getCurrentSystemInfo(),
                 sessionVariable.isPreferComputeNode(), sessionVariable.getUseComputeNodes(),
-                sessionVariable.getComputationFragmentSchedulingPolicy());
+                sessionVariable.getComputationFragmentSchedulingPolicy(), connectContext.getCurrentWarehouseId());
 
         jobSpec.getFragments().forEach(PlanFragment::reset);
     }

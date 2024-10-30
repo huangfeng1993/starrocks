@@ -129,9 +129,13 @@ public class DefaultSharedDataWorkerProviderTest {
     }
 
     private WorkerProvider newWorkerProvider() {
-        return factory.captureAvailableWorkers(
-                GlobalStateMgr.getCurrentState().getNodeMgr().getClusterInfo(), true, 
-                -1, ComputationFragmentSchedulingPolicy.COMPUTE_NODES_ONLY);
+        try {
+            return factory.captureAvailableWorkers(
+                    GlobalStateMgr.getCurrentState().getNodeMgr().getClusterInfo(), true,
+                    -1, ComputationFragmentSchedulingPolicy.COMPUTE_NODES_ONLY, 0);
+        } catch (UserException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static void testUsingWorkerHelper(WorkerProvider workerProvider, Long workerId) {
