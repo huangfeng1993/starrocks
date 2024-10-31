@@ -110,15 +110,24 @@ public class LoadAction extends RestBaseAction {
         Authorizer.checkTableAction(ConnectContext.get().getCurrentUserIdentity(), ConnectContext.get().getCurrentRoleIds(),
                 dbName, tableName, PrivilegeType.INSERT);
 
+        String warehouseName = "default_warehouse";
+        if (request.getRequest().headers().contains("warehouse")) {
+            warehouseName = request.getRequest().headers().get("warehouse");
+        }
+
         // Choose a backend sequentially, or choose a cn in shared_data mode
         List<Long> nodeIds = new ArrayList<>();
         if (RunMode.isSharedDataMode()) {
-            Warehouse warehouse = GlobalStateMgr.getCurrentWarehouseMgr().getDefaultWarehouse();
+            Warehouse warehouse = GlobalStateMgr.getCurrentWarehouseMgr().getWarehouse(warehouseName);
+            if (warehouse == null) {
+                throw new DdlException("Warehouse " + warehouseName + " not exists.");
+            }
             for (long nodeId : warehouse.getAnyAvailableCluster().getComputeNodeIds()) {
                 ComputeNode node = GlobalStateMgr.getCurrentSystemInfo().getBackendOrComputeNode(nodeId);
-                if (node != null && node.isAvailable()) {
-                    nodeIds.add(nodeId);
+                if (node == null || !node.isAvailable()) {
+                    continue;
                 }
+                nodeIds.add(nodeId);
             }
             Collections.shuffle(nodeIds);
         } else {

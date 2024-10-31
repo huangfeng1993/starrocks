@@ -446,6 +446,11 @@ Status StreamLoadAction::_process_put(HttpRequest* http_req, StreamLoadContext* 
     if (!http_req->header(HTTP_ROW_DELIMITER).empty()) {
         request.__set_rowDelimiter(http_req->header(HTTP_ROW_DELIMITER));
     }
+
+    if (!http_req->header(HTTP_WAREHOUSE_NAME).empty()) {
+        request.__set_warehouse(http_req->header(HTTP_WAREHOUSE_NAME));
+    }
+
     if (!http_req->header(HTTP_SKIP_HEADER).empty()) {
         try {
             auto skip_header = std::stoll(http_req->header(HTTP_SKIP_HEADER));

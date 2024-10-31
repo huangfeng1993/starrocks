@@ -269,6 +269,7 @@ public class JobSpec {
                     .queryGlobals(null)
                     .queryOptions(null)
                     .enablePipeline(false)
+                    .warehouseId(planner.getWarehouseId())
                     .resourceGroup(null)
                     .build();
         }

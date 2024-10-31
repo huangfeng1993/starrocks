@@ -143,4 +143,8 @@ public abstract class ScanNode extends PlanNode {
     protected boolean supportTopNRuntimeFilter() {
         return false;
     }
+
+    public void setWarehouseId(long warehouseId) {
+        this.warehouseId = warehouseId;
+    }
 }

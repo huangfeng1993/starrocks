@@ -750,6 +750,7 @@ public class StreamLoadTask extends AbstractTxnStateChangeCallback
                 streamLoadInfo.getNegative(), channelNum, streamLoadInfo.getColumnExprDescs(), streamLoadInfo, label,
                 streamLoadInfo.getTimeout());
 
+        loadPlanner.setWarehouseId(streamLoadInfo.getWarehouseId());
         loadPlanner.plan();
 
         coord = getCoordinatorFactory().createStreamLoadScheduler(loadPlanner);
