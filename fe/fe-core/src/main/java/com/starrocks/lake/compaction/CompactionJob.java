@@ -19,6 +19,7 @@ import com.starrocks.catalog.Database;
 import com.starrocks.catalog.PhysicalPartition;
 import com.starrocks.catalog.Table;
 import com.starrocks.proto.CompactStat;
+import com.starrocks.server.WarehouseManager;
 import com.starrocks.transaction.TabletCommitInfo;
 import com.starrocks.transaction.VisibleStateWaiter;
 import org.apache.logging.log4j.LogManager;
@@ -42,9 +43,15 @@ public class CompactionJob {
     private VisibleStateWaiter visibleStateWaiter;
     private List<CompactionTask> tasks = Collections.emptyList();
     private boolean allowPartialSuccess = false;
+    private String warehouse;
 
     public CompactionJob(Database db, Table table, PhysicalPartition partition, long txnId,
-            boolean allowPartialSuccess) {
+                         boolean allowPartialSuccess) {
+        this(db, table, partition, txnId, allowPartialSuccess, WarehouseManager.DEFAULT_WAREHOUSE_NAME);
+    }
+
+    public CompactionJob(Database db, Table table, PhysicalPartition partition, long txnId,
+                         boolean allowPartialSuccess, String warehouse) {
         this.db = Objects.requireNonNull(db, "db is null");
         this.table = Objects.requireNonNull(table, "table is null");
         this.partition = Objects.requireNonNull(partition, "partition is null");
@@ -52,6 +59,7 @@ public class CompactionJob {
         this.startTs = System.currentTimeMillis();
         this.commitTs = 0L;
         this.finishTs = 0L;
+        this.warehouse = warehouse;
         this.allowPartialSuccess = allowPartialSuccess;
     }
 
@@ -163,6 +171,10 @@ public class CompactionJob {
 
     public boolean getAllowPartialSuccess() {
         return allowPartialSuccess;
+    }
+
+    public String getWarehouse() {
+        return this.warehouse;
     }
 
     public String getExecutionProfile() {

@@ -42,6 +42,7 @@ import com.starrocks.transaction.GlobalTransactionMgr;
 import com.starrocks.transaction.TabletCommitInfo;
 import com.starrocks.transaction.TransactionState;
 import com.starrocks.transaction.VisibleStateWaiter;
+import com.starrocks.warehouse.Warehouse;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -302,7 +303,8 @@ public class CompactionScheduler extends Daemon {
         }
 
         long nextCompactionInterval = MIN_COMPACTION_INTERVAL_MS_ON_SUCCESS;
-        CompactionJob job = new CompactionJob(db, table, partition, txnId, Config.lake_compaction_allow_partial_success);
+        CompactionJob job = new CompactionJob(db, table, partition, txnId, Config.lake_compaction_allow_partial_success,
+                Config.lake_compaction_warehouse);
         try {
             List<CompactionTask> tasks = createCompactionTasks(currentVersion, beToTablets, txnId,
                     job.getAllowPartialSuccess());
@@ -349,13 +351,19 @@ public class CompactionScheduler extends Daemon {
         return tasks;
     }
 
+    static long getCompactionWorkerGroupId() throws UserException {
+        String warehouseName = Config.lake_compaction_warehouse;
+        Warehouse warehouse = GlobalStateMgr.getCurrentWarehouseMgr().getAvailbleWarehouse(warehouseName);
+        return warehouse.getAnyAvailableCluster().getWorkerGroupId();
+    }
+
     @NotNull
-    private Map<Long, List<Long>> collectPartitionTablets(PhysicalPartition partition) {
+    private Map<Long, List<Long>> collectPartitionTablets(PhysicalPartition partition) throws UserException {
         List<MaterializedIndex> visibleIndexes = partition.getMaterializedIndices(MaterializedIndex.IndexExtState.VISIBLE);
         Map<Long, List<Long>> beToTablets = new HashMap<>();
         for (MaterializedIndex index : visibleIndexes) {
             for (Tablet tablet : index.getTablets()) {
-                Long beId = Utils.chooseBackend((LakeTablet) tablet);
+                Long beId = Utils.chooseNodeId((LakeTablet) tablet, CompactionScheduler.getCompactionWorkerGroupId());
                 if (beId == null) {
                     beToTablets.clear();
                     return beToTablets;
@@ -377,6 +385,16 @@ public class CompactionScheduler extends Daemon {
         TransactionState.TxnSourceType txnSourceType = TransactionState.TxnSourceType.FE;
         TransactionState.TxnCoordinator coordinator = new TransactionState.TxnCoordinator(txnSourceType, HOST_NAME);
         String label = String.format("COMPACTION_%d-%d-%d-%d", dbId, tableId, partitionId, currentTs);
+
+        String warehouseName = Config.lake_compaction_warehouse;
+        Warehouse warehouse = GlobalStateMgr.getCurrentWarehouseMgr().getWarehouse(warehouseName);
+        if (warehouse == null) {
+            throw new BeginTransactionException("warehouse " + warehouseName + " not exist");
+        }
+        if (!warehouse.isAvailable()) {
+            throw new BeginTransactionException("warehouse " + warehouseName + " is not available");
+        }
+
         return transactionMgr.beginTransaction(dbId, Lists.newArrayList(tableId), label, coordinator,
                 loadJobSourceType, Config.lake_compaction_default_timeout_second);
     }

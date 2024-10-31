@@ -134,6 +134,10 @@ public abstract class Warehouse implements Writable {
         this.updatedTime = time;
     }
 
+    public boolean isAvailable() {
+        return this.state == WarehouseState.AVAILABLE;
+    }
+
     @Override
     public void write(DataOutput out) throws IOException {
         String json = GsonUtils.GSON.toJson(this);
