@@ -83,6 +83,7 @@ import com.starrocks.transaction.TabletCommitInfo;
 import com.starrocks.transaction.TabletFailInfo;
 import com.starrocks.transaction.TransactionException;
 import com.starrocks.transaction.TransactionState;
+import com.starrocks.warehouse.Warehouse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -166,6 +167,8 @@ public abstract class LoadJob extends AbstractTxnStateChangeCallback implements 
     @SerializedName("pg")
     protected int progress;
 
+    @SerializedName(value = "warehouseId")
+    protected long warehouseId = 0L;
     @SerializedName("mc")
     protected String mergeCondition;
     @SerializedName("jo")
@@ -411,6 +414,15 @@ public abstract class LoadJob extends AbstractTxnStateChangeCallback implements 
             } else if (ConnectContext.get() != null) {
                 // get timezone for session variable
                 timezone = ConnectContext.get().getSessionVariable().getTimeZone();
+            }
+
+            if (properties.containsKey("warehouse")) {
+                String warehouseName = properties.get("warehouse");
+                Warehouse warehouse = GlobalStateMgr.getCurrentWarehouseMgr().getWarehouse(warehouseName);
+                if (warehouse == null) {
+                    throw new DdlException("Warehouse " + warehouseName + " not exists.");
+                }
+                this.warehouseId = warehouse.getId();
             }
 
             if (properties.containsKey(LoadStmt.PRIORITY)) {

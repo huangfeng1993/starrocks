@@ -2919,7 +2919,7 @@ public class FrontendServiceImpl implements FrontendService.Iface {
                     dictTable.getAutomaticBucketSize(), allPartitions);
             response.setPartition(partitionParam);
             response.setLocation(OlapTableSink.createLocation(
-                    dictTable, dictTable.getClusterId(), partitionParam, dictTable.enableReplicatedStorage()));
+                    dictTable, dictTable.getClusterId(), partitionParam, dictTable.enableReplicatedStorage(), 0));
             response.setNodes_info(GlobalStateMgr.getCurrentState().createNodesInfo(dictTable.getClusterId()));
         } catch (UserException e) {
             SemanticException semanticException = new SemanticException("build DictQueryParams error in dict_query_expr.");

@@ -80,6 +80,7 @@ import com.starrocks.transaction.GlobalTransactionMgr;
 import com.starrocks.transaction.TransactionState;
 import com.starrocks.transaction.TransactionState.TxnCoordinator;
 import com.starrocks.transaction.TransactionState.TxnSourceType;
+import com.starrocks.warehouse.Warehouse;
 import org.apache.hadoop.util.ThreadUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -119,17 +120,26 @@ public class BrokerLoadJob extends BulkLoadJob {
         this.brokerDesc = brokerDesc;
         this.jobType = EtlJobType.BROKER;
         this.context = context;
+        if (context != null) {
+            this.warehouseId = context.getCurrentWarehouseId();
+        }
     }
 
     @Override
     public void beginTxn()
             throws LabelAlreadyUsedException, BeginTransactionException, AnalysisException, DuplicatedRequestException {
         MetricRepo.COUNTER_LOAD_ADD.increase(1L);
-        transactionId = GlobalStateMgr.getCurrentGlobalTransactionMgr()
-                .beginTransaction(dbId, Lists.newArrayList(fileGroupAggInfo.getAllTableIds()), label, null,
-                        new TxnCoordinator(TxnSourceType.FE, FrontendOptions.getLocalHostAddress()),
-                        TransactionState.LoadJobSourceType.BATCH_LOAD_JOB, id,
-                        timeoutSecond);
+
+        try {
+            Warehouse currentWh = GlobalStateMgr.getCurrentWarehouseMgr().getAvailbleWarehouse(this.warehouseId);
+            transactionId = GlobalStateMgr.getCurrentGlobalTransactionMgr()
+                    .beginTransaction(dbId, Lists.newArrayList(fileGroupAggInfo.getAllTableIds()), label, null,
+                            new TxnCoordinator(TxnSourceType.FE, FrontendOptions.getLocalHostAddress()),
+                            TransactionState.LoadJobSourceType.BATCH_LOAD_JOB, id,
+                            timeoutSecond, currentWh.getAnyAvailableCluster().getWorkerGroupId());
+        } catch (UserException e) {
+            throw new BeginTransactionException(e.getMessage());
+        }
     }
 
     @Override
@@ -300,6 +310,7 @@ public class BrokerLoadJob extends BulkLoadJob {
                         .setFileStatusList(attachment.getFileStatusByTable(aggKey))
                         .setFileNum(attachment.getFileNumByTable(aggKey))
                         .setLoadId(loadId)
+                        .setWarehouseId(warehouseId)
                         .setJSONOptions(jsonOptions)
                         .build();
 

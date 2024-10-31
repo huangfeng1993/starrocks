@@ -103,6 +103,7 @@ public class LoadLoadingTask extends LoadTask {
     private final OriginStatement originStmt;
     private final List<List<TBrokerFileStatus>> fileStatusList;
     private final int fileNum;
+    private long warehouseId;
 
     private final LoadJob.JSONOptions jsonOptions;
 
@@ -130,6 +131,7 @@ public class LoadLoadingTask extends LoadTask {
         this.loadId = builder.loadId;
         this.fileStatusList = builder.fileStatusList;
         this.fileNum = builder.fileNum;
+        this.warehouseId = builder.warehouseId;
         this.jsonOptions = builder.jsonOptions;
     }
 
@@ -139,6 +141,7 @@ public class LoadLoadingTask extends LoadTask {
                 brokerDesc, fileGroups, fileStatusList, fileNum);
         loadPlanner.setPartialUpdateMode(partialUpdateMode);
         loadPlanner.setMergeConditionStr(mergeConditionStr);
+        loadPlanner.setWarehouseId(warehouseId);
         loadPlanner.setJsonOptions(jsonOptions);
         loadPlanner.plan();
     }
@@ -329,6 +332,7 @@ public class LoadLoadingTask extends LoadTask {
         private int fileNum = 0;
         private LoadTaskCallback callback;
         private int priority;
+        private long warehouseId;
 
         private LoadJob.JSONOptions jsonOptions = new LoadJob.JSONOptions();
 
@@ -449,6 +453,11 @@ public class LoadLoadingTask extends LoadTask {
 
         public Builder setJSONOptions(LoadJob.JSONOptions options) {
             this.jsonOptions = options;
+            return this;
+        }
+
+        public Builder setWarehouseId(long warehouseId) {
+            this.warehouseId = warehouseId;
             return this;
         }
 

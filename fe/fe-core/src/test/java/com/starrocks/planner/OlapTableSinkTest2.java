@@ -70,7 +70,7 @@ public class OlapTableSinkTest2 {
             partitionParam.addToPartitions(tPartition);
         }
         try {
-            OlapTableSink.createLocation(olapTable, -1, partitionParam, false);
+            OlapTableSink.createLocation(olapTable, -1, partitionParam, false, 0);
         } catch (UserException e) {
             System.out.println(e.getMessage());
             Assert.assertTrue(e.getMessage().contains("replicas: 10001:1/-1/1/0:NORMAL:ALIVE"));

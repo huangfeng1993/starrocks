@@ -272,7 +272,7 @@ public class OlapTableSinkTest {
         tPartition.setId(partitionId);
         partitionParam.addToPartitions(tPartition);
         TOlapTableLocationParam param = OlapTableSink.createLocation(
-                table, table.getClusterId(), partitionParam, false);
+                table, table.getClusterId(), partitionParam, false, 0);
         System.out.println(param);
 
         // Check
@@ -359,7 +359,7 @@ public class OlapTableSinkTest {
         tPartition.setId(partitionId);
         partitionParam.addToPartitions(tPartition);
         TOlapTableLocationParam param = OlapTableSink.createLocation(
-                table, table.getClusterId(), partitionParam, true);
+                table, table.getClusterId(), partitionParam, true, 0);
         System.out.println(param);
 
         // Check

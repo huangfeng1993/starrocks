@@ -173,7 +173,7 @@ public class JobSpec {
                     .needReport(true)
                     .queryGlobals(queryGlobals)
                     .queryOptions(queryOptions)
-                    .warehouseId(context.getCurrentWarehouseId())
+                    .warehouseId(loadPlanner.getWarehouseId())
                     .commonProperties(context)
                     .build();
         }

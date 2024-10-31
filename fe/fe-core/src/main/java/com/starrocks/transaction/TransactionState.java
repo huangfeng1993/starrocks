@@ -322,6 +322,9 @@ public class TransactionState implements Writable {
     @SerializedName("ta")
     private TxnCommitAttachment txnCommitAttachment;
 
+    @SerializedName(value = "wg")
+    private long workerGroupId = 0L;
+
     // this map should be set when load execution begin, so that when the txn commit, it will know
     // which tables and rollups it loaded.
     // tbl id -> (index ids)
@@ -451,6 +454,10 @@ public class TransactionState implements Writable {
         this.publishVersionTime = System.currentTimeMillis();
     }
 
+    public void setWorkerGroupId(long workerGroupId) {
+        this.workerGroupId = workerGroupId;
+    }
+
     public void updateSendTaskTime() {
         this.publishVersionTime = System.currentTimeMillis();
     }
@@ -473,6 +480,10 @@ public class TransactionState implements Writable {
 
     public long getTransactionId() {
         return transactionId;
+    }
+
+    public long getWorkerGroupId() {
+        return this.workerGroupId;
     }
 
     public String getLabel() {

@@ -291,7 +291,15 @@ public class GlobalTransactionMgr implements Writable, MemoryTrackable {
                                  LoadJobSourceType sourceType,
                                  long timeoutSecond)
             throws AnalysisException, LabelAlreadyUsedException, BeginTransactionException, DuplicatedRequestException {
-        return beginTransaction(dbId, tableIdList, label, null, coordinator, sourceType, -1, timeoutSecond);
+        return beginTransaction(dbId, tableIdList, label, null, coordinator, sourceType, -1, timeoutSecond, 0);
+    }
+
+    public long beginTransaction(long dbId, List<Long> tableIdList, String label, TUniqueId requestId,
+                                 TxnCoordinator coordinator, LoadJobSourceType sourceType, long listenerId,
+                                 long timeoutSecond)
+            throws AnalysisException, LabelAlreadyUsedException, BeginTransactionException, DuplicatedRequestException {
+        return beginTransaction(dbId, tableIdList, label, requestId, coordinator, sourceType, listenerId, timeoutSecond,
+                0);
     }
 
     /**
@@ -309,7 +317,7 @@ public class GlobalTransactionMgr implements Writable, MemoryTrackable {
      */
     public long beginTransaction(long dbId, List<Long> tableIdList, String label, TUniqueId requestId,
                                  TxnCoordinator coordinator, LoadJobSourceType sourceType, long listenerId,
-                                 long timeoutSecond)
+                                 long timeoutSecond, long workerGroupId)
             throws AnalysisException, LabelAlreadyUsedException, BeginTransactionException, DuplicatedRequestException {
 
         if (Config.disable_load_job) {
@@ -341,7 +349,8 @@ public class GlobalTransactionMgr implements Writable, MemoryTrackable {
 
         DatabaseTransactionMgr dbTransactionMgr = getDatabaseTransactionMgr(dbId);
         return dbTransactionMgr
-                .beginTransaction(tableIdList, label, requestId, coordinator, sourceType, listenerId, timeoutSecond);
+                .beginTransaction(tableIdList, label, requestId, coordinator, sourceType, listenerId, timeoutSecond,
+                        workerGroupId);
     }
 
     public static void checkValidTimeoutSecond(long timeoutSecond, int maxLoadTimeoutSecond, int minLoadTimeOutSecond)

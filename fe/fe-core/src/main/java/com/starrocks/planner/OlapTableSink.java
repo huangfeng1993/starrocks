@@ -140,6 +140,7 @@ public class OlapTableSink extends DataSink {
     private int autoIncrementSlotId;
     private boolean enableAutomaticPartition;
     private TPartialUpdateMode partialUpdateMode;
+    private long warehouseId = 0L;
     private long automaticBucketSize = 0;
 
     public OlapTableSink(OlapTable dstTable, TupleDescriptor tupleDescriptor, List<Long> partitionIds,
@@ -165,6 +166,14 @@ public class OlapTableSink extends DataSink {
             }
         }
         this.partialUpdateMode = TPartialUpdateMode.UNKNOWN_MODE;
+    }
+
+    public OlapTableSink(OlapTable dstTable, TupleDescriptor tupleDescriptor, List<Long> partitionIds,
+                         TWriteQuorumType writeQuorum, boolean enableReplicatedStorage, boolean nullExprInAutoIncrement,
+                         boolean enableAutomaticPartition, long warehouseId) {
+        this(dstTable, tupleDescriptor, partitionIds, writeQuorum, enableReplicatedStorage, nullExprInAutoIncrement,
+                enableAutomaticPartition);
+        this.warehouseId = warehouseId;
     }
 
     public void init(TUniqueId loadId, long txnId, long dbId, long loadChannelTimeoutS)
@@ -245,7 +254,7 @@ public class OlapTableSink extends DataSink {
         TOlapTablePartitionParam partitionParam = createPartition(tSink.getDb_id(), dstTable, tupleDescriptor,
                 enableAutomaticPartition, automaticBucketSize, partitionIds);
         tSink.setPartition(partitionParam);
-        tSink.setLocation(createLocation(dstTable, clusterId, partitionParam, enableReplicatedStorage));
+        tSink.setLocation(createLocation(dstTable, clusterId, partitionParam, enableReplicatedStorage, warehouseId));
         tSink.setNodes_info(GlobalStateMgr.getCurrentState().createNodesInfo(clusterId));
         tSink.setPartial_update_mode(this.partialUpdateMode);
         tSink.setAutomatic_bucket_size(automaticBucketSize);
@@ -663,7 +672,8 @@ public class OlapTableSink extends DataSink {
     }
 
     public static TOlapTableLocationParam createLocation(OlapTable table, int clusterId, TOlapTablePartitionParam partitionParam,
-                                                          boolean enableReplicatedStorage) throws UserException {
+                                                         boolean enableReplicatedStorage, long warehouseId)
+            throws UserException {
         TOlapTableLocationParam locationParam = new TOlapTableLocationParam();
         // replica -> path hash
         Multimap<Long, Long> allBePathsMap = HashMultimap.create();
@@ -684,7 +694,7 @@ public class OlapTableSink extends DataSink {
                 for (int idx = 0; idx < index.getTablets().size(); ++idx) {
                     Tablet tablet = index.getTablets().get(idx);
                     if (table.isCloudNativeTableOrMaterializedView()) {
-                        Warehouse warehouse = GlobalStateMgr.getCurrentWarehouseMgr().getDefaultWarehouse();
+                        Warehouse warehouse = GlobalStateMgr.getCurrentWarehouseMgr().getWarehouse(warehouseId);
                         long workerGroupId = warehouse.getAnyAvailableCluster().getWorkerGroupId();
                         locationParam.addToTablets(new TTabletLocation(tablet.getId(),
                                 Lists.newArrayList(((LakeTablet) tablet).getPrimaryComputeNodeId(workerGroupId))));

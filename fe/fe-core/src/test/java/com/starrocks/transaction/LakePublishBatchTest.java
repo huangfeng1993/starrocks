@@ -310,7 +310,7 @@ public class LakePublishBatchTest {
     public void testPublishLogVersion() throws Exception {
         List<Tablet> tablets = new ArrayList<>();
         tablets.add(new LakeTablet(1L));
-        Utils.publishLogVersion(tablets, 1, 1);
+        Utils.publishLogVersion(tablets, 1, 1, 0);
     }
 
     @Test

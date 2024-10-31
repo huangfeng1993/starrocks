@@ -43,9 +43,6 @@ import com.starrocks.analysis.ArithmeticExpr;
 import com.starrocks.analysis.BrokerDesc;
 import com.starrocks.analysis.Expr;
 import com.starrocks.analysis.FunctionCallExpr;
-import com.starrocks.catalog.TableFunctionTable;
-import com.starrocks.load.loadv2.LoadJob;
-import com.starrocks.sql.ast.ImportColumnDesc;
 import com.starrocks.analysis.IntLiteral;
 import com.starrocks.analysis.NullLiteral;
 import com.starrocks.analysis.SlotDescriptor;
@@ -59,6 +56,7 @@ import com.starrocks.catalog.FsBroker;
 import com.starrocks.catalog.FunctionSet;
 import com.starrocks.catalog.PrimitiveType;
 import com.starrocks.catalog.Table;
+import com.starrocks.catalog.TableFunctionTable;
 import com.starrocks.catalog.Type;
 import com.starrocks.common.AnalysisException;
 import com.starrocks.common.Config;
@@ -71,6 +69,7 @@ import com.starrocks.common.util.BrokerUtil;
 import com.starrocks.fs.HdfsUtil;
 import com.starrocks.load.BrokerFileGroup;
 import com.starrocks.load.Load;
+import com.starrocks.load.loadv2.LoadJob;
 import com.starrocks.server.GlobalStateMgr;
 import com.starrocks.server.RunMode;
 import com.starrocks.sql.ast.ImportColumnDesc;
@@ -103,7 +102,6 @@ import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.starrocks.catalog.DefaultExpr.SUPPORTED_DEFAULT_FNS;
 
@@ -178,12 +176,18 @@ public class FileScanNode extends LoadScanNode {
 
     public FileScanNode(PlanNodeId id, TupleDescriptor desc, String planNodeName,
                         List<List<TBrokerFileStatus>> fileStatusesList, int filesAdded) {
+        this(id, desc, planNodeName, fileStatusesList, filesAdded, 0);
+    }
+
+    public FileScanNode(PlanNodeId id, TupleDescriptor desc, String planNodeName,
+                        List<List<TBrokerFileStatus>> fileStatusesList, int filesAdded, long warehouseId) {
         super(id, desc, planNodeName);
         this.fileStatusesList = fileStatusesList;
         this.filesAdded = filesAdded;
         this.parallelInstanceNum = 1;
         this.useVectorizedLoad = false;
         this.nullExprInAutoIncrement = true;
+        this.warehouseId = warehouseId;
     }
 
     @Override

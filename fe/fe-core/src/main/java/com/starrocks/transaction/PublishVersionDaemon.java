@@ -536,7 +536,7 @@ public class PublishVersionDaemon extends FrontendDaemon {
                 int index = versions.indexOf(item.getKey());
                 List<Tablet> publishShdowTablets = new ArrayList<>(item.getValue());
                 Utils.publishLogVersionBatch(publishShdowTablets, txnIds.subList(index, txnIds.size()),
-                        versions.subList(index, versions.size()));
+                        versions.subList(index, versions.size()), 0);
             }
             if (CollectionUtils.isNotEmpty(normalTablets)) {
                 Map<Long, Double> compactionScores = new HashMap<>();
@@ -552,7 +552,7 @@ public class PublishVersionDaemon extends FrontendDaemon {
                 Map<ComputeNode, List<Long>> nodeToTablets = new HashMap<>();
                 Utils.publishVersionBatch(publishTablets, txnInfos,
                         startVersion - 1, endVersion, compactionScores,
-                        nodeToTablets);
+                        nodeToTablets, 0);
 
                 Quantiles quantiles = Quantiles.compute(compactionScores.values());
                 stateBatch.setCompactionScore(tableId, partitionId, quantiles);
@@ -754,6 +754,7 @@ public class PublishVersionDaemon extends FrontendDaemon {
         long txnId = txnState.getTransactionId();
         long commitTime = txnState.getCommitTime();
         String txnLabel = txnState.getLabel();
+        long workerGroupId = txnState.getWorkerGroupId();
         List<Tablet> normalTablets = null;
         List<Tablet> shadowTablets = null;
 
@@ -797,11 +798,11 @@ public class PublishVersionDaemon extends FrontendDaemon {
         TxnInfoPB txnInfo = TxnInfoHelper.fromTransactionState(txnState);
         try {
             if (CollectionUtils.isNotEmpty(shadowTablets)) {
-                Utils.publishLogVersion(shadowTablets, txnId, txnVersion);
+                Utils.publishLogVersion(shadowTablets, txnId, txnVersion, workerGroupId);
             }
             if (CollectionUtils.isNotEmpty(normalTablets)) {
                 Map<Long, Double> compactionScores = new HashMap<>();
-                Utils.publishVersion(normalTablets, txnInfo, baseVersion, txnVersion, compactionScores);
+                Utils.publishVersion(normalTablets, txnInfo, baseVersion, txnVersion, compactionScores, workerGroupId);
 
                 Quantiles quantiles = Quantiles.compute(compactionScores.values());
                 partitionCommitInfo.setCompactionScore(quantiles);

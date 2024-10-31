@@ -15,6 +15,7 @@
 package com.starrocks.lake;
 
 import com.google.common.collect.Lists;
+import com.staros.proto.ShardInfo;
 import com.starrocks.catalog.MaterializedIndex;
 import com.starrocks.catalog.OlapTable;
 import com.starrocks.catalog.Partition;
@@ -41,6 +42,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.Future;
 import javax.validation.constraints.NotNull;
 
@@ -67,12 +69,50 @@ public class Utils {
         }
     }
 
-    public static ComputeNode chooseNode(LakeTablet tablet) {
-        Long nodeId = chooseBackend(tablet);
+    public static Long chooseNodeId(LakeTablet tablet, long workerGroupId) {
+        try {
+            ShardInfo shardInfo = tablet.getShardInfo();
+            return Utils.chooseNodeId(shardInfo, workerGroupId);
+        } catch (Exception e2) {
+            LOG.error("Ignored error", (Throwable) e2);
+            return Utils.chooseRandomNodeId(workerGroupId);
+        }
+    }
+
+    public static Long chooseNodeId(ShardInfo shardInfo, long workerGroupId) {
+        try {
+            return GlobalStateMgr.getCurrentState().getStarOSAgent()
+                    .getPrimaryComputeNodeIdByShard(shardInfo.getShardId(), workerGroupId);
+        } catch (Exception e2) {
+            LOG.error("Ignored error", (Throwable) e2);
+            return Utils.chooseRandomNodeId(workerGroupId);
+        }
+    }
+
+    public static Long chooseRandomNodeId(long workerGroupId) {
+        try {
+            List<Long> nodeIds =
+                    GlobalStateMgr.getCurrentState().getStarOSAgent().getWorkersByWorkerGroup(workerGroupId);
+            if (!nodeIds.isEmpty()) {
+                int randomIndex = new Random().nextInt(nodeIds.size());
+                return nodeIds.get(randomIndex);
+            }
+            return null;
+        } catch (UserException e2) {
+            return null;
+        }
+    }
+
+    public static ComputeNode chooseNode(LakeTablet tablet, long workerGroupId) {
+        Long nodeId = Utils.chooseNodeId(tablet, workerGroupId);
         if (nodeId == null) {
             return null;
         }
-        return GlobalStateMgr.getCurrentSystemInfo().getBackendOrComputeNode(nodeId);
+        return GlobalStateMgr.getCurrentState().getNodeMgr().getClusterInfo().getBackendOrComputeNode(nodeId);
+    }
+
+    public static ComputeNode chooseNode(LakeTablet tablet) {
+        return Utils.chooseNode(tablet, 0);
     }
 
     // Preconditions: Has required the database's reader lock.
@@ -101,22 +141,23 @@ public class Utils {
         return groupMap;
     }
 
+
     public static void publishVersion(@NotNull List<Tablet> tablets, TxnInfoPB txnInfo, long baseVersion,
-            long newVersion) throws NoAliveBackendException, RpcException {
-        publishVersion(tablets, txnInfo, baseVersion, newVersion, null);
+                                      long newVersion) throws NoAliveBackendException, RpcException {
+        publishVersion(tablets, txnInfo, baseVersion, newVersion, null, 0);
     }
 
     public static void publishVersionBatch(@NotNull List<Tablet> tablets, List<TxnInfoPB> txnInfos,
                                            long baseVersion, long newVersion,
                                            Map<Long, Double> compactionScores,
-                                           Map<ComputeNode, List<Long>> nodeToTablets)
+                                           Map<ComputeNode, List<Long>> nodeToTablets, long workerGroupId)
             throws NoAliveBackendException, RpcException {
         if (nodeToTablets == null) {
             nodeToTablets = new HashMap<>();
         }
 
         for (Tablet tablet : tablets) {
-            ComputeNode node = Utils.chooseNode((LakeTablet) tablet);
+            ComputeNode node = Utils.chooseNode((LakeTablet) tablet, workerGroupId);
             if (node == null) {
                 throw new NoAliveBackendException("No alive node for handle publish version request");
             }
@@ -157,26 +198,27 @@ public class Utils {
     }
 
     public static void publishVersion(@NotNull List<Tablet> tablets, TxnInfoPB txnInfo, long baseVersion, long newVersion,
-                                      Map<Long, Double> compactionScores)
+                                      Map<Long, Double> compactionScores, long workerGroupId)
             throws NoAliveBackendException, RpcException {
         List<TxnInfoPB> txnInfos = Lists.newArrayList(txnInfo);
-        publishVersionBatch(tablets, txnInfos, baseVersion, newVersion, compactionScores, null);
+        publishVersionBatch(tablets, txnInfos, baseVersion, newVersion, compactionScores, null, workerGroupId);
     }
 
-    public static void publishLogVersion(@NotNull List<Tablet> tablets, long txnId, long version)
+    public static void publishLogVersion(@NotNull List<Tablet> tablets, long txnId, long version, long workerGroupId)
             throws NoAliveBackendException, RpcException {
         List<Long> txnIds = new ArrayList<>();
         txnIds.add(txnId);
         List<Long> versions = new ArrayList<>();
         versions.add(version);
-        publishLogVersionBatch(tablets, txnIds, versions);
+        publishLogVersionBatch(tablets, txnIds, versions, workerGroupId);
     }
 
-    public static void publishLogVersionBatch(@NotNull List<Tablet> tablets, List<Long> txnIds, List<Long> versions)
+    public static void publishLogVersionBatch(@NotNull List<Tablet> tablets, List<Long> txnIds, List<Long> versions,
+                                              long workerGroupId)
             throws NoAliveBackendException, RpcException {
         Map<ComputeNode, List<Long>> nodeToTablets = new HashMap<>();
         for (Tablet tablet : tablets) {
-            ComputeNode node = Utils.chooseNode((LakeTablet) tablet);
+            ComputeNode node = Utils.chooseNode((LakeTablet) tablet, workerGroupId);
             if (node == null) {
                 throw new NoAliveBackendException("No alive node for handle publish version request");
             }

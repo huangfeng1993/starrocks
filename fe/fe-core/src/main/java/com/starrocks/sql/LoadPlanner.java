@@ -135,6 +135,8 @@ public class LoadPlanner {
 
     private LoadJob.JSONOptions jsonOptions = new LoadJob.JSONOptions();
 
+    private long warehouseId = 0L;
+
     private Boolean missAutoIncrementColumn = Boolean.FALSE;
 
     private String mergeConditionStr;
@@ -394,7 +396,7 @@ public class LoadPlanner {
         if (this.etlJobType == EtlJobType.BROKER) {
             FileScanNode fileScanNode = new FileScanNode(new PlanNodeId(planNodeGenerator.getNextId().asInt()),
                     tupleDesc,
-                    "FileScanNode", fileStatusesList, filesAdded);
+                    "FileScanNode", fileStatusesList, filesAdded, warehouseId);
             fileScanNode.setLoadInfo(loadJobId, txnId, destTable, brokerDesc, fileGroups, strictMode,
                     parallelInstanceNum);
             fileScanNode.setUseVectorizedLoad(true);
@@ -404,7 +406,7 @@ public class LoadPlanner {
             scanNode = fileScanNode;
         } else if (this.etlJobType == EtlJobType.STREAM_LOAD || this.etlJobType == EtlJobType.ROUTINE_LOAD) {
             StreamLoadScanNode streamScanNode = new StreamLoadScanNode(loadId, new PlanNodeId(0), tupleDesc,
-                    destTable, streamLoadInfo, dbName, label, parallelInstanceNum, txnId);
+                    destTable, streamLoadInfo, dbName, label, parallelInstanceNum, txnId, warehouseId);
             streamScanNode.setNeedAssignBE(true);
             streamScanNode.setUseVectorizedLoad(true);
             streamScanNode.init(analyzer);
@@ -452,7 +454,7 @@ public class LoadPlanner {
             dataSink = new OlapTableSink(olapTable, tupleDesc, partitionIds,
                     olapTable.writeQuorum(),
                     forceReplicatedStorage ? true : ((OlapTable) destTable).enableReplicatedStorage(),
-                    checkNullExprInAutoIncrement(), enableAutomaticPartition);
+                    checkNullExprInAutoIncrement(), enableAutomaticPartition, warehouseId);
             if (this.missAutoIncrementColumn == Boolean.TRUE) {
                 ((OlapTableSink) dataSink).setMissAutoIncrementColumn();
             }
@@ -582,6 +584,14 @@ public class LoadPlanner {
 
     public ConnectContext getContext() {
         return context;
+    }
+
+    public void setWarehouseId(long warehouseId) {
+        this.warehouseId = warehouseId;
+    }
+
+    public long getWarehouseId() {
+        return this.warehouseId;
     }
 
     public DescriptorTable getDescTable() {
